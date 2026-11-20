@@ -32,63 +32,64 @@ void main() {
 
 /// Soft rising "pop" for planting a seed.
 List<double> plant() => render(0.16, (t, d) {
-      final f = 260 + 520 * (t / d);
-      return sin(2 * pi * f * t) * env(t, d, attack: 0.005, curve: 3) * 0.7;
-    });
+  final f = 260 + 520 * (t / d);
+  return sin(2 * pi * f * t) * env(t, d, attack: 0.005, curve: 3) * 0.7;
+});
 
 /// Rustle of leaves plus a bright two-note chime.
 List<double> harvest() => render(0.32, (t, d) {
-      final rustle = noise() * env(t, 0.12, attack: 0.002, curve: 2) * 0.25;
-      final n1 = tone(660, t) * env(t, 0.14, attack: 0.003, curve: 3);
-      final n2 = t > 0.08
-          ? tone(990, t - 0.08) * env(t - 0.08, 0.24, attack: 0.003, curve: 3)
-          : 0.0;
-      return rustle + (n1 + n2) * 0.45;
-    });
+  final rustle = noise() * env(t, 0.12, attack: 0.002, curve: 2) * 0.25;
+  final n1 = tone(660, t) * env(t, 0.14, attack: 0.003, curve: 3);
+  final n2 = t > 0.08
+      ? tone(990, t - 0.08) * env(t - 0.08, 0.24, attack: 0.003, curve: 3)
+      : 0.0;
+  return rustle + (n1 + n2) * 0.45;
+});
 
 /// Classic shiny two-note coin.
 List<double> coin() => render(0.38, (t, d) {
-      final first = t < 0.07;
-      final f = first ? 988.0 : 1319.0;
-      final local = first ? t : t - 0.07;
-      final e = first
-          ? env(local, 0.07, attack: 0.002, curve: 0.5)
-          : env(local, d - 0.07, attack: 0.002, curve: 3);
-      final s = sin(2 * pi * f * local) + 0.3 * sin(2 * pi * f * 2 * local);
-      return s * e * 0.4;
-    });
+  final first = t < 0.07;
+  final f = first ? 988.0 : 1319.0;
+  final local = first ? t : t - 0.07;
+  final e = first
+      ? env(local, 0.07, attack: 0.002, curve: 0.5)
+      : env(local, d - 0.07, attack: 0.002, curve: 3);
+  final s = sin(2 * pi * f * local) + 0.3 * sin(2 * pi * f * 2 * local);
+  return s * e * 0.4;
+});
 
 /// Friendly bell arpeggio (C-E-G) when the mill or oven finishes.
 List<double> done() => render(0.75, (t, d) {
-      const notes = [523.25, 659.25, 783.99];
-      var v = 0.0;
-      for (var i = 0; i < notes.length; i++) {
-        final start = i * 0.11;
-        if (t < start) continue;
-        final lt = t - start;
-        v += (sin(2 * pi * notes[i] * lt) +
-                0.4 * sin(2 * pi * notes[i] * 3 * lt) * exp(-lt * 12)) *
-            env(lt, d - start, attack: 0.004, curve: 4);
-      }
-      return v * 0.3;
-    });
+  const notes = [523.25, 659.25, 783.99];
+  var v = 0.0;
+  for (var i = 0; i < notes.length; i++) {
+    final start = i * 0.11;
+    if (t < start) continue;
+    final lt = t - start;
+    v +=
+        (sin(2 * pi * notes[i] * lt) +
+            0.4 * sin(2 * pi * notes[i] * 3 * lt) * exp(-lt * 12)) *
+        env(lt, d - start, attack: 0.004, curve: 4);
+  }
+  return v * 0.3;
+});
 
 /// Very short wooden "tock" for button taps.
 List<double> tap() => render(0.06, (t, d) {
-      final f = 900 - 400 * (t / d);
-      return (sin(2 * pi * f * t) * 0.8 + noise() * 0.15) *
-          env(t, d, attack: 0.001, curve: 4) *
-          0.55;
-    });
+  final f = 900 - 400 * (t / d);
+  return (sin(2 * pi * f * t) * 0.8 + noise() * 0.15) *
+      env(t, d, attack: 0.001, curve: 4) *
+      0.55;
+});
 
 /// Gentle low "nuh-uh" for errors (not harsh).
 List<double> error() => render(0.34, (t, d) {
-      final first = t < 0.15;
-      final f = first ? 233.0 : 175.0;
-      final lt = first ? t : t - 0.15;
-      final e = env(lt, first ? 0.15 : 0.19, attack: 0.005, curve: 1.5);
-      return triangle(f, lt) * e * 0.5;
-    });
+  final first = t < 0.15;
+  final f = first ? 233.0 : 175.0;
+  final lt = first ? t : t - 0.15;
+  final e = env(lt, first ? 0.15 : 0.19, attack: 0.005, curve: 1.5);
+  return triangle(f, lt) * e * 0.5;
+});
 
 // --------------------------------------------------------------- helpers
 
@@ -103,8 +104,12 @@ double triangle(double f, double t) {
 double noise() => _rng.nextDouble() * 2 - 1;
 
 /// Quick attack, then a decay shaped by [curve] (higher = faster fade).
-double env(double t, double d,
-    {required double attack, required double curve}) {
+double env(
+  double t,
+  double d, {
+  required double attack,
+  required double curve,
+}) {
   if (t < 0 || t > d) return 0;
   if (t < attack) return t / attack;
   final x = (t - attack) / (d - attack);

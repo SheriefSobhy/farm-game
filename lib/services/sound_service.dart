@@ -28,7 +28,9 @@ class SoundService extends ChangeNotifier {
       // Let the player's own music keep playing alongside the game sounds.
       try {
         await AudioPlayer.global.setAudioContext(
-          AudioContextConfig(focus: AudioContextConfigFocus.mixWithOthers).build(),
+          AudioContextConfig(
+            focus: AudioContextConfigFocus.mixWithOthers,
+          ).build(),
         );
       } catch (e) {
         debugPrint('Could not set audio context: $e');
@@ -38,9 +40,9 @@ class SoundService extends ChangeNotifier {
     FlameAudio.audioCache
         .loadAll([for (final s in Sfx.values) _file(s)])
         .catchError((Object e) {
-      debugPrint('Could not preload sounds: $e');
-      return <Uri>[];
-    });
+          debugPrint('Could not preload sounds: $e');
+          return <Uri>[];
+        });
   }
 
   /// Call on the first user tap. Safe to call many times.
@@ -68,8 +70,8 @@ class SoundService extends ChangeNotifier {
   static String _file(Sfx s) => '${s.name}.wav';
 
   static double _volume(Sfx s) => switch (s) {
-        Sfx.tap => 0.5,
-        Sfx.error => 0.6,
-        _ => 0.8,
-      };
+    Sfx.tap => 0.5,
+    Sfx.error => 0.6,
+    _ => 0.8,
+  };
 }

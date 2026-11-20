@@ -75,9 +75,9 @@ class ProductionBuilding {
   }
 
   Map<String, dynamic> toJson() => {
-        'owned': owned,
-        'jobStartedAtMs': jobStartedAtMs,
-      };
+    'owned': owned,
+    'jobStartedAtMs': jobStartedAtMs,
+  };
 
   void loadFromJson(Map<String, dynamic>? json) {
     owned = json?['owned'] == true;

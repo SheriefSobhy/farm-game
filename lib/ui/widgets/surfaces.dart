@@ -2,18 +2,25 @@ import 'package:flutter/material.dart';
 
 import '../../art/palette.dart';
 
-/// Soft cream "paper" card with rounded corners and a gentle shadow.
+/// Hard pixel-style drop shadow used by cards and panels.
+const List<BoxShadow> hardShadow = [
+  BoxShadow(color: Color(0x553F2631), offset: Offset(0, 4)),
+];
+
+/// Cream "paper" card with a dark outline, matching the pixel art.
 class PaperCard extends StatelessWidget {
   const PaperCard({
     super.key,
     required this.child,
-    this.padding = const EdgeInsets.all(16),
-    this.margin = const EdgeInsets.only(bottom: 14),
+    this.padding = const EdgeInsets.all(14),
+    this.margin = const EdgeInsets.only(bottom: 12),
+    this.color = Palette.paper,
   });
 
   final Widget child;
   final EdgeInsetsGeometry padding;
   final EdgeInsetsGeometry margin;
+  final Color color;
 
   @override
   Widget build(BuildContext context) {
@@ -21,23 +28,17 @@ class PaperCard extends StatelessWidget {
       margin: margin,
       padding: padding,
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [Palette.paper, Color(0xFFFFF0D0)],
-        ),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Palette.paperDark, width: 2.5),
-        boxShadow: const [
-          BoxShadow(color: Color(0x2E5A3A22), blurRadius: 14, offset: Offset(0, 6)),
-        ],
+        color: color,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Palette.outline, width: 3),
+        boxShadow: hardShadow,
       ),
       child: child,
     );
   }
 }
 
-/// Wooden planks background (top bar, sign boards, nav bar).
+/// Flat wooden planks (top bar, sign boards, bottom bar).
 class WoodPanel extends StatelessWidget {
   const WoodPanel({
     super.key,
@@ -46,6 +47,7 @@ class WoodPanel extends StatelessWidget {
     this.planks = 2,
     this.padding = EdgeInsets.zero,
     this.nails = false,
+    this.border = true,
   });
 
   final Widget child;
@@ -53,100 +55,95 @@ class WoodPanel extends StatelessWidget {
   final int planks;
   final EdgeInsetsGeometry padding;
   final bool nails;
+  final bool border;
 
   @override
   Widget build(BuildContext context) {
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(radius),
-      child: CustomPaint(
-        painter: _WoodPainter(planks: planks, radius: radius, nails: nails),
-        child: Padding(padding: padding, child: child),
+    return CustomPaint(
+      painter: _WoodPainter(
+        planks: planks,
+        radius: radius,
+        nails: nails,
+        border: border,
       ),
+      child: Padding(padding: padding, child: child),
     );
   }
 }
 
 class _WoodPainter extends CustomPainter {
-  _WoodPainter({required this.planks, required this.radius, required this.nails});
+  _WoodPainter({
+    required this.planks,
+    required this.radius,
+    required this.nails,
+    required this.border,
+  });
 
   final int planks;
   final double radius;
   final bool nails;
+  final bool border;
 
   @override
   void paint(Canvas canvas, Size size) {
     final rect = Offset.zero & size;
-    canvas.drawRect(
-      rect,
-      Paint()
-        ..shader = const LinearGradient(
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
-          colors: [Palette.woodLight, Palette.wood],
-        ).createShader(rect),
-    );
+    final rrect = RRect.fromRectAndRadius(rect, Radius.circular(radius));
+    canvas.save();
+    canvas.clipRRect(rrect);
+    canvas.drawRect(rect, Paint()..color = Palette.wood);
     final ph = size.height / planks;
-    final seam = Paint()
-      ..color = Palette.woodDark
-      ..strokeWidth = 2.5;
-    final highlight = Paint()
-      ..color = const Color(0x33FFFFFF)
-      ..strokeWidth = 1.5;
-    final grain = Paint()
-      ..color = const Color(0x22000000)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.2;
     for (var i = 0; i < planks; i++) {
       final top = i * ph;
-      if (i > 0) canvas.drawLine(Offset(0, top), Offset(size.width, top), seam);
-      canvas.drawLine(Offset(0, top + 2), Offset(size.width, top + 2), highlight);
-      // wavy wood grain
-      for (var g = 0; g < 2; g++) {
-        final y = top + ph * (0.35 + g * 0.3);
-        final path = Path()..moveTo(0, y);
-        for (var x = 0.0; x < size.width; x += 60) {
-          path.quadraticBezierTo(x + 15, y - 2.5 + g * 5, x + 30, y);
-          path.quadraticBezierTo(x + 45, y + 2.5 - g * 5, x + 60, y);
-        }
-        canvas.drawPath(path, grain);
+      canvas.drawRect(
+        Rect.fromLTWH(0, top, size.width, 3),
+        Paint()..color = Palette.woodLight,
+      );
+      canvas.drawRect(
+        Rect.fromLTWH(0, top + ph - 3, size.width, 3),
+        Paint()..color = Palette.woodDark,
+      );
+      // little knots and grain dashes, pixel style
+      for (var x = 18.0 + i * 37; x < size.width - 10; x += 74) {
+        canvas.drawRect(
+          Rect.fromLTWH(x, top + ph * 0.45, 14, 3),
+          Paint()..color = Palette.woodDark,
+        );
       }
-      // knots
-      final kx = (size.width * (0.23 + 0.41 * i)) % size.width;
-      canvas.drawOval(
-          Rect.fromCenter(center: Offset(kx, top + ph * 0.5), width: 10, height: 5), grain);
     }
-    // inner border
-    final border = Paint()
-      ..color = Palette.woodDeep
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 3;
-    canvas.drawRRect(
-      RRect.fromRectAndRadius(rect.deflate(1.5), Radius.circular(radius)),
-      border,
-    );
     if (nails) {
-      final nail = Paint()..color = Palette.woodDeep;
-      final shine = Paint()..color = const Color(0x66FFFFFF);
+      final nail = Paint()..color = Palette.outline;
       for (final o in [
         const Offset(10, 10),
-        Offset(size.width - 10, 10),
-        Offset(10, size.height - 10),
-        Offset(size.width - 10, size.height - 10),
+        Offset(size.width - 14, 10),
+        Offset(10, size.height - 14),
+        Offset(size.width - 14, size.height - 14),
       ]) {
-        canvas.drawCircle(o, 3.2, nail);
-        canvas.drawCircle(o - const Offset(1, 1), 1.1, shine);
+        canvas.drawRect(Rect.fromLTWH(o.dx, o.dy, 4, 4), nail);
       }
+    }
+    canvas.restore();
+    if (border) {
+      canvas.drawRRect(
+        rrect.deflate(1.5),
+        Paint()
+          ..color = Palette.outline
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 3,
+      );
     }
   }
 
   @override
   bool shouldRepaint(_WoodPainter old) =>
-      old.planks != planks || old.radius != radius || old.nails != nails;
+      old.planks != planks ||
+      old.radius != radius ||
+      old.nails != nails ||
+      old.border != border;
 }
 
-/// Rounded picture frame for the building illustrations.
+/// Framed picture area for building illustrations in panels.
 class SceneFrame extends StatelessWidget {
-  const SceneFrame({super.key, required this.child, this.height = 210});
+  const SceneFrame({super.key, required this.child, this.height = 180});
 
   final Widget child;
   final double height;
@@ -155,15 +152,44 @@ class SceneFrame extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       height: height,
-      margin: const EdgeInsets.only(bottom: 14),
+      margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(26),
-        border: Border.all(color: Palette.woodDark, width: 4),
-        boxShadow: const [
-          BoxShadow(color: Color(0x335A3A22), blurRadius: 14, offset: Offset(0, 6)),
-        ],
+        color: Palette.grass,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Palette.outline, width: 3),
+        boxShadow: hardShadow,
       ),
-      child: ClipRRect(borderRadius: BorderRadius.circular(22), child: child),
+      child: ClipRRect(borderRadius: BorderRadius.circular(9), child: child),
+    );
+  }
+}
+
+/// A small dark pill with a number, e.g. "x12".
+class CountPill extends StatelessWidget {
+  const CountPill(this.text, {super.key, this.color = Palette.woodDeep});
+
+  final String text;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      decoration: BoxDecoration(
+        color: color,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: Palette.outline, width: 2),
+      ),
+      child: Text(
+        text,
+        style: const TextStyle(
+          fontFamily: 'Fredoka',
+          fontSize: 15,
+          fontWeight: FontWeight.w700,
+          fontVariations: [FontVariation('wght', 700)],
+          color: Color(0xFFFFFFFF),
+        ),
+      ),
     );
   }
 }

@@ -7,46 +7,44 @@ import '../services/sound_service.dart';
 import 'game_scope.dart';
 import 'widgets/surfaces.dart';
 
-/// The five tabs. The order must match the IndexedStack in GameScreen.
-enum GameTab {
-  farm(GameIconType.barn, 'Farm'),
-  mill(GameIconType.windmill, 'Mill'),
-  oven(GameIconType.oven, 'Oven'),
-  market(GameIconType.stall, 'Market'),
-  shop(GameIconType.bag, 'Shop');
-
-  const GameTab(this.icon, this.label);
+/// One big button in the bottom bar.
+class BarButton {
+  const BarButton(
+    this.icon,
+    this.label,
+    this.onTap, {
+    this.targetName,
+    this.badge = 0,
+  });
   final GameIconType icon;
   final String label;
+  final VoidCallback onTap;
+
+  /// Name of a fly-to target (e.g. "barn") placed on this button's icon.
+  final String? targetName;
+
+  /// A red badge with this number when > 0.
+  final int badge;
 }
 
+/// Wooden bar with big rounded buttons along the bottom of the screen.
 class BottomButtons extends StatelessWidget {
-  const BottomButtons({super.key, required this.selected, required this.onSelected});
+  const BottomButtons({super.key, required this.buttons});
 
-  final GameTab selected;
-  final ValueChanged<GameTab> onSelected;
+  final List<BarButton> buttons;
 
   @override
   Widget build(BuildContext context) {
     return WoodPanel(
       planks: 2,
+      border: false,
       child: SafeArea(
         top: false,
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(6, 8, 6, 8),
+          padding: const EdgeInsets.fromLTRB(6, 7, 6, 7),
           child: Row(
             children: [
-              for (final tab in GameTab.values)
-                Expanded(
-                  child: _TabButton(
-                    tab: tab,
-                    selected: tab == selected,
-                    onTap: () {
-                      GameScope.of(context).sound.play(Sfx.tap);
-                      onSelected(tab);
-                    },
-                  ),
-                ),
+              for (final b in buttons) Expanded(child: _Button(button: b)),
             ],
           ),
         ),
@@ -55,73 +53,94 @@ class BottomButtons extends StatelessWidget {
   }
 }
 
-class _TabButton extends StatefulWidget {
-  const _TabButton({required this.tab, required this.selected, required this.onTap});
+class _Button extends StatefulWidget {
+  const _Button({required this.button});
 
-  final GameTab tab;
-  final bool selected;
-  final VoidCallback onTap;
+  final BarButton button;
 
   @override
-  State<_TabButton> createState() => _TabButtonState();
+  State<_Button> createState() => _ButtonState();
 }
 
-class _TabButtonState extends State<_TabButton> {
+class _ButtonState extends State<_Button> {
   bool _down = false;
 
   @override
   Widget build(BuildContext context) {
-    final selected = widget.selected;
-    final scale = _down ? 0.9 : (selected ? 1.06 : 1.0);
+    final b = widget.button;
+    final scope = GameScope.of(context);
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
       onTapDown: (_) => setState(() => _down = true),
       onTapUp: (_) => setState(() => _down = false),
       onTapCancel: () => setState(() => _down = false),
-      onTap: widget.onTap,
+      onTap: () {
+        scope.sound.play(Sfx.tap);
+        b.onTap();
+      },
       child: AnimatedScale(
-        scale: scale,
+        scale: _down ? 0.88 : 1,
         duration: Duration(milliseconds: _down ? 70 : 500),
         curve: _down ? Curves.easeOut : Curves.elasticOut,
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          height: 74,
-          margin: const EdgeInsets.symmetric(horizontal: 3),
-          transform: Matrix4.translationValues(0, selected ? -4 : 0, 0),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: selected
-                  ? const [Color(0xFFFFF3C4), Palette.gold]
-                  : const [Color(0x664A2812), Color(0x884A2812)],
-            ),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(
-              color: selected ? Palette.goldDark : Palette.woodDeep,
-              width: selected ? 3 : 2,
-            ),
-            boxShadow: selected
-                ? const [BoxShadow(color: Color(0x665E3719), offset: Offset(0, 4), blurRadius: 4)]
-                : null,
-          ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              GameIcon(widget.tab.icon, size: selected ? 40 : 36),
-              const SizedBox(height: 1),
-              FittedBox(
-                fit: BoxFit.scaleDown,
-                child: Text(
-                  widget.tab.label,
-                  style: selected
-                      ? AppText.style(14, weight: 700, color: Palette.woodDeep)
-                      : AppText.light(14, weight: 650),
-                ),
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            Container(
+              height: 66,
+              margin: const EdgeInsets.symmetric(horizontal: 3),
+              decoration: BoxDecoration(
+                color: Palette.cream,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Palette.outline, width: 3),
+                boxShadow: hardShadow,
               ),
-            ],
-          ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  GameIcon(
+                    b.icon,
+                    size: 36,
+                    key: b.targetName == null
+                        ? null
+                        : scope.fx.target(b.targetName!),
+                  ),
+                  FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(b.label, style: AppText.style(14, weight: 700)),
+                  ),
+                ],
+              ),
+            ),
+            if (b.badge > 0)
+              Positioned(right: -2, top: -6, child: RedBadge(count: b.badge)),
+          ],
         ),
+      ),
+    );
+  }
+}
+
+/// A red circle with a white number, for "something is ready".
+class RedBadge extends StatelessWidget {
+  const RedBadge({super.key, required this.count});
+
+  final int count;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      constraints: const BoxConstraints(minWidth: 24),
+      height: 24,
+      padding: const EdgeInsets.symmetric(horizontal: 5),
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: Palette.red,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Palette.outline, width: 2.5),
+      ),
+      child: Text(
+        count > 9 ? '9+' : '$count',
+        style: AppText.light(13, weight: 700),
       ),
     );
   }

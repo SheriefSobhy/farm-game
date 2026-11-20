@@ -76,8 +76,8 @@ class _ChunkyButtonState extends State<ChunkyButton> {
                 child: DecoratedBox(
                   decoration: BoxDecoration(
                     color: lip,
-                    borderRadius: BorderRadius.circular(18),
-                    border: Border.all(color: Palette.outline.withValues(alpha: 0.55), width: 2),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: Palette.outline, width: 3),
                   ),
                 ),
               ),
@@ -89,29 +89,24 @@ class _ChunkyButtonState extends State<ChunkyButton> {
                 height: h,
                 child: Container(
                   decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [Color.lerp(face, Colors.white, 0.18)!, face],
-                    ),
-                    borderRadius: BorderRadius.circular(18),
-                    border: Border.all(color: Palette.outline.withValues(alpha: 0.55), width: 2),
+                    color: face,
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: Palette.outline, width: 3),
                   ),
-                  padding: const EdgeInsets.symmetric(horizontal: 14),
+                  padding: const EdgeInsets.symmetric(horizontal: 10),
                   alignment: Alignment.center,
                   child: Stack(
                     alignment: Alignment.center,
                     children: [
-                      // glossy top highlight
+                      // flat pixel highlight strip along the top
                       Positioned(
-                        top: 4,
-                        left: 6,
-                        right: 6,
-                        height: h * 0.28,
-                        child: DecoratedBox(
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: enabled ? 0.22 : 0.12),
-                            borderRadius: BorderRadius.circular(12),
+                        top: 2,
+                        left: 4,
+                        right: 4,
+                        height: 4,
+                        child: ColoredBox(
+                          color: Colors.white.withValues(
+                            alpha: enabled ? 0.3 : 0.15,
                           ),
                         ),
                       ),

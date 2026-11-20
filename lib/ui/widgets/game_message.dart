@@ -72,8 +72,10 @@ class ToastView extends StatelessWidget {
           child: ScaleTransition(
             scale: CurvedAnimation(parent: anim, curve: Curves.easeOutBack),
             child: SlideTransition(
-              position: Tween(begin: const Offset(0, -0.4), end: Offset.zero)
-                  .animate(CurvedAnimation(parent: anim, curve: Curves.easeOut)),
+              position: Tween(
+                begin: const Offset(0, -0.4),
+                end: Offset.zero,
+              ).animate(CurvedAnimation(parent: anim, curve: Curves.easeOut)),
               child: child,
             ),
           ),
@@ -105,13 +107,20 @@ class _ToastCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: Palette.woodDark, width: 4),
         boxShadow: const [
-          BoxShadow(color: Color(0x445A3A22), blurRadius: 16, offset: Offset(0, 6)),
+          BoxShadow(
+            color: Color(0x445A3A22),
+            blurRadius: 16,
+            offset: Offset(0, 6),
+          ),
         ],
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          GameIcon(result.ok ? GameIconType.check : GameIconType.warning, size: 34),
+          GameIcon(
+            result.ok ? GameIconType.check : GameIconType.warning,
+            size: 34,
+          ),
           const SizedBox(width: 10),
           Flexible(
             child: IconText(

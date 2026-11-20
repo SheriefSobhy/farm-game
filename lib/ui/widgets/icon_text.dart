@@ -3,22 +3,15 @@ import 'package:flutter/material.dart';
 import '../../art/icons.dart';
 import '../../models/item.dart';
 
-GameIconType itemIcon(Item item) => switch (item) {
-      Item.wheat => GameIconType.wheat,
-      Item.flour => GameIconType.flour,
-      Item.bread => GameIconType.bread,
-    };
+/// Every item has an icon with the same name.
+GameIconType itemIcon(Item item) => GameIconType.values.byName(item.name);
 
-const Map<String, GameIconType> _tokens = {
-  'coin': GameIconType.coin,
-  'wheat': GameIconType.wheat,
-  'flour': GameIconType.flour,
-  'bread': GameIconType.bread,
-};
+final Map<String, GameIconType> _tokens = GameIconType.values.asNameMap();
 
 final RegExp _tokenPattern = RegExp(r'\{(\w+)\}');
 
-/// Text where "{coin}", "{wheat}", "{flour}" and "{bread}" are shown as icons.
+/// Text where tokens like "{coin}" or "{wheat}" (any [GameIconType] name)
+/// are shown as icons.
 class IconText extends StatelessWidget {
   const IconText(
     this.text, {
@@ -41,17 +34,24 @@ class IconText extends StatelessWidget {
     for (final m in _tokenPattern.allMatches(text)) {
       final type = _tokens[m.group(1)];
       if (type == null) continue;
-      if (m.start > last) spans.add(TextSpan(text: text.substring(last, m.start)));
-      spans.add(WidgetSpan(
-        alignment: PlaceholderAlignment.middle,
-        child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: iconSize * 0.08),
-          child: GameIcon(type, size: iconSize),
+      if (m.start > last) {
+        spans.add(TextSpan(text: text.substring(last, m.start)));
+      }
+      spans.add(
+        WidgetSpan(
+          alignment: PlaceholderAlignment.middle,
+          child: Padding(
+            padding: EdgeInsets.symmetric(horizontal: iconSize * 0.08),
+            child: GameIcon(type, size: iconSize),
+          ),
         ),
-      ));
+      );
       last = m.end;
     }
     if (last < text.length) spans.add(TextSpan(text: text.substring(last)));
-    return Text.rich(TextSpan(style: style, children: spans), textAlign: textAlign);
+    return Text.rich(
+      TextSpan(style: style, children: spans),
+      textAlign: textAlign,
+    );
   }
 }

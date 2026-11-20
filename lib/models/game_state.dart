@@ -12,7 +12,7 @@ import 'production_building.dart';
 /// UI widgets and the Flame game both read from and call into this class.
 class GameState extends ChangeNotifier {
   GameState({int Function()? clock})
-      : _clock = clock ?? (() => DateTime.now().millisecondsSinceEpoch) {
+    : _clock = clock ?? (() => DateTime.now().millisecondsSinceEpoch) {
     _resetValues();
   }
 
@@ -57,7 +57,8 @@ class GameState extends ChangeNotifier {
       const cost = GameConfig.wheatSeedCost;
       if (coins < cost) {
         return const ActionResult.fail(
-            'Not enough coins! Planting costs $cost $coinToken');
+          'Not enough coins! Planting costs $cost $coinToken',
+        );
       }
       coins -= cost;
       plot.plantedAtMs = now;
@@ -73,17 +74,22 @@ class GameState extends ChangeNotifier {
     plot.plantedAtMs = null;
     _add(Item.wheat, GameConfig.wheatPerHarvest);
     _changed();
-    return ActionResult.ok('+${GameConfig.wheatPerHarvest} ${Item.wheat.token}');
+    return ActionResult.ok(
+      '+${GameConfig.wheatPerHarvest} ${Item.wheat.token}',
+    );
   }
 
   ActionResult buyPlot() {
     if (!canBuyMorePlots) {
-      return const ActionResult.fail('Your farm is full! (max ${GameConfig.maxPlots} plots)');
+      return const ActionResult.fail(
+        'Your farm is full! (max ${GameConfig.maxPlots} plots)',
+      );
     }
     final price = nextPlotPrice;
     if (coins < price) {
       return ActionResult.fail(
-          'Not enough coins! A new plot costs $price $coinToken');
+        'Not enough coins! A new plot costs $price $coinToken',
+      );
     }
     coins -= price;
     plots.add(Plot());
@@ -100,7 +106,8 @@ class GameState extends ChangeNotifier {
     }
     if (coins < recipe.price) {
       return ActionResult.fail(
-          'Not enough coins! The ${recipe.buildingName} costs ${recipe.price} $coinToken');
+        'Not enough coins! The ${recipe.buildingName} costs ${recipe.price} $coinToken',
+      );
     }
     coins -= recipe.price;
     building.owned = true;
@@ -112,15 +119,19 @@ class GameState extends ChangeNotifier {
     final recipe = building.recipe;
     if (!building.owned) {
       return ActionResult.fail(
-          'Buy the ${recipe.buildingName} in the Shop first.');
+        'Buy the ${recipe.buildingName} in the Shop first.',
+      );
     }
     if (building.isWorking) {
-      return ActionResult.fail('The ${recipe.buildingName} is busy. Please wait!');
+      return ActionResult.fail(
+        'The ${recipe.buildingName} is busy. Please wait!',
+      );
     }
     if (count(recipe.input) < recipe.inputAmount) {
       return ActionResult.fail(
-          'Not enough ${recipe.input.label.toLowerCase()}! '
-          'You need ${recipe.inputAmount} ${recipe.input.token}');
+        'Not enough ${recipe.input.label.toLowerCase()}! '
+        'You need ${recipe.inputAmount} ${recipe.input.token}',
+      );
     }
     _add(recipe.input, -recipe.inputAmount);
     building.jobStartedAtMs = nowMs;
@@ -133,7 +144,8 @@ class GameState extends ChangeNotifier {
   ActionResult sell(Item item, int amount) {
     if (amount <= 0 || count(item) < amount) {
       return ActionResult.fail(
-          'You have no ${item.label.toLowerCase()} to sell ${item.token}');
+        'You have no ${item.label.toLowerCase()} to sell ${item.token}',
+      );
     }
     final earned = amount * item.sellPrice;
     _add(item, -amount);
@@ -161,7 +173,9 @@ class GameState extends ChangeNotifier {
     }
     if (changed) {
       _changed();
-    } else if (mill.isWorking || oven.isWorking || plots.any((p) => !p.isEmpty)) {
+    } else if (mill.isWorking ||
+        oven.isWorking ||
+        plots.any((p) => !p.isEmpty)) {
       notifyListeners(); // progress bars only, nothing to save
     }
   }
@@ -176,12 +190,12 @@ class GameState extends ChangeNotifier {
   }
 
   Map<String, dynamic> toJson() => {
-        'coins': coins,
-        'items': {for (final i in Item.values) i.name: count(i)},
-        'plots': [for (final p in plots) p.plantedAtMs],
-        'mill': mill.toJson(),
-        'oven': oven.toJson(),
-      };
+    'coins': coins,
+    'items': {for (final i in Item.values) i.name: count(i)},
+    'plots': [for (final p in plots) p.plantedAtMs],
+    'mill': mill.toJson(),
+    'oven': oven.toJson(),
+  };
 
   void loadFromJson(Map<String, dynamic> json) {
     _resetValues();
@@ -200,9 +214,11 @@ class GameState extends ChangeNotifier {
     if (savedPlots is List && savedPlots.isNotEmpty) {
       plots
         ..clear()
-        ..addAll(savedPlots
-            .take(GameConfig.maxPlots)
-            .map((t) => Plot(plantedAtMs: t is int ? t : null)));
+        ..addAll(
+          savedPlots
+              .take(GameConfig.maxPlots)
+              .map((t) => Plot(plantedAtMs: t is int ? t : null)),
+        );
     }
 
     final m = json['mill'];

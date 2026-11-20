@@ -1,14 +1,24 @@
 # Credits
 
-## Graphics
-All graphics (plots, wheat, windmill, oven, market stall, farmhouse, trees,
-icons for coins/wheat/flour/bread, buttons, wood and paper panels) are drawn
-in code with Flutter/Flame canvas calls — see `lib/art/`.
-Created for this project and released under **CC0 1.0** (public domain).
-No external image files are used, so `assets/images/` is not needed.
+Every asset in this game is either public domain (CC0) or under a license
+that allows commercial use.
 
-(Kenney.nl's CC0 packs were the first choice, but their site blocks automated
-downloads, so everything was drawn in code instead.)
+## Graphics — `assets/images/`
+
+| File | What | Author / source | License |
+|---|---|---|---|
+| `kenney_tiny_farm.png` | Soil, crops (3 growth stages), animals, barn, troughs, trees, products | **Tiny Farm** by Kenney — https://opengameart.org/content/tiny-farm (also https://kenney.nl) | **CC0 1.0** (see `KENNEY_TINY_FARM_LICENSE.txt`) |
+| `kenney_tiny_town.png` | Grass, flowers, trees, fences, dirt path, coin, beehive, sign, bag | **Tiny Town** by Kenney — https://opengameart.org/content/tiny-town (also https://kenney.nl) | **CC0 1.0** (see `KENNEY_TINY_TOWN_LICENSE.txt`) |
+| `extra.png` | Windmill, bakery oven, popcorn machine, feed mill, dairy, market stall, orders board, coop, cow shed, bread, popcorn, cheese, cake, cow feed, gem, star, and UI icons | Made for this project in the Kenney "Tiny" style and palette by `tool/make_sprites.dart` | **CC0 1.0** |
+
+Each Kenney license file was checked: "This content is free to use in
+personal, educational and commercial projects." Crediting Kenney is optional,
+but we do it anyway — thank you, Kenney!
+
+The packs did not include a windmill, oven, bread, gems and a few other things,
+so those were drawn as new pixel art in the same 16×16 style and color palette
+so everything looks like one set. Rebuild them with:
+`dart run tool/make_sprites.dart`
 
 ## Sound effects — `assets/audio/*.wav`
 `plant`, `harvest`, `coin`, `done`, `tap`, `error` were synthesized from

@@ -33,6 +33,10 @@ class AppText {
     );
   }
 
-  static TextStyle light(double size, {double weight = 600}) =>
-      style(size, weight: weight, color: const Color(0xFFFFFFFF), shadows: popShadow);
+  static TextStyle light(double size, {double weight = 600}) => style(
+    size,
+    weight: weight,
+    color: const Color(0xFFFFFFFF),
+    shadows: popShadow,
+  );
 }

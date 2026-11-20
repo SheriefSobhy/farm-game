@@ -7,32 +7,41 @@ import '../art/palette.dart';
 import '../art/text_styles.dart';
 import '../models/game_state.dart';
 import '../models/item.dart';
+import 'game_scope.dart';
 import 'widgets/animated_count.dart';
 import 'widgets/icon_text.dart';
 import 'widgets/surfaces.dart';
 
-/// Wooden bar that always shows coins, wheat, flour and bread.
+/// Wooden bar that always shows coins and the main items.
+/// Each icon is a target for flying icons ("coin", "item:wheat", ...).
 class TopBar extends StatelessWidget {
-  const TopBar({super.key, required this.state, required this.coinKey, required this.itemKeys});
+  const TopBar({super.key, required this.state});
 
   final GameState state;
 
-  /// Keys on the icons, so flying icons know where to go.
-  final GlobalKey coinKey;
-  final Map<Item, GlobalKey> itemKeys;
-
   @override
   Widget build(BuildContext context) {
+    final fx = GameScope.of(context).fx;
     return WoodPanel(
       planks: 2,
-      padding: const EdgeInsets.fromLTRB(6, 9, 6, 11),
+      border: false,
+      padding: const EdgeInsets.fromLTRB(6, 8, 6, 9),
       child: ListenableBuilder(
         listenable: state,
         builder: (context, _) => Row(
           children: [
-            _Stat(icon: GameIconType.coin, value: state.coins, iconKey: coinKey),
+            Stat(
+              icon: GameIconType.coin,
+              value: state.coins,
+              iconKey: fx.target('coin'),
+              flex: 4,
+            ),
             for (final item in Item.values)
-              _Stat(icon: itemIcon(item), value: state.count(item), iconKey: itemKeys[item]!),
+              Stat(
+                icon: itemIcon(item),
+                value: state.count(item),
+                iconKey: fx.target('item:${item.name}'),
+              ),
           ],
         ),
       ),
@@ -40,23 +49,33 @@ class TopBar extends StatelessWidget {
   }
 }
 
-class _Stat extends StatefulWidget {
-  const _Stat({required this.icon, required this.value, required this.iconKey});
+/// An icon with a number that counts up and down and bumps on change.
+class Stat extends StatefulWidget {
+  const Stat({
+    super.key,
+    required this.icon,
+    required this.value,
+    required this.iconKey,
+    this.flex = 3,
+  });
 
   final GameIconType icon;
   final int value;
   final GlobalKey iconKey;
+  final int flex;
 
   @override
-  State<_Stat> createState() => _StatState();
+  State<Stat> createState() => _StatState();
 }
 
-class _StatState extends State<_Stat> with SingleTickerProviderStateMixin {
-  late final AnimationController _bump =
-      AnimationController(vsync: this, duration: const Duration(milliseconds: 420));
+class _StatState extends State<Stat> with SingleTickerProviderStateMixin {
+  late final AnimationController _bump = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 420),
+  );
 
   @override
-  void didUpdateWidget(_Stat old) {
+  void didUpdateWidget(Stat old) {
     super.didUpdateWidget(old);
     if (old.value != widget.value) _bump.forward(from: 0);
   }
@@ -70,6 +89,7 @@ class _StatState extends State<_Stat> with SingleTickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
     return Expanded(
+      flex: widget.flex,
       child: AnimatedBuilder(
         animation: _bump,
         builder: (context, child) => Transform.scale(
@@ -77,26 +97,26 @@ class _StatState extends State<_Stat> with SingleTickerProviderStateMixin {
           child: child,
         ),
         child: Container(
-          height: 40,
-          margin: const EdgeInsets.symmetric(horizontal: 3),
-          padding: const EdgeInsets.only(left: 3, right: 8),
+          height: 38,
+          margin: const EdgeInsets.symmetric(horizontal: 2),
+          padding: const EdgeInsets.only(left: 2, right: 7),
           decoration: BoxDecoration(
-            color: const Color(0x8A4A2812),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: Palette.woodDeep, width: 2),
-            boxShadow: const [
-              BoxShadow(color: Color(0x33FFFFFF), offset: Offset(0, 1.5)),
-            ],
+            color: Palette.woodDeep,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: Palette.outline, width: 3),
           ),
           child: Row(
             children: [
-              GameIcon(widget.icon, key: widget.iconKey, size: 32),
+              GameIcon(widget.icon, key: widget.iconKey, size: 28),
               const SizedBox(width: 2),
               Expanded(
                 child: FittedBox(
                   fit: BoxFit.scaleDown,
                   alignment: Alignment.centerRight,
-                  child: AnimatedCount(value: widget.value, style: AppText.light(19, weight: 650)),
+                  child: AnimatedCount(
+                    value: widget.value,
+                    style: AppText.light(18, weight: 650),
+                  ),
                 ),
               ),
             ],

@@ -9,16 +9,16 @@ extension ItemInfo on Item {
   String get token => '{$name}';
 
   String get label => switch (this) {
-        Item.wheat => 'Wheat',
-        Item.flour => 'Flour',
-        Item.bread => 'Bread',
-      };
+    Item.wheat => 'Wheat',
+    Item.flour => 'Flour',
+    Item.bread => 'Bread',
+  };
 
   int get sellPrice => switch (this) {
-        Item.wheat => GameConfig.wheatSellPrice,
-        Item.flour => GameConfig.flourSellPrice,
-        Item.bread => GameConfig.breadSellPrice,
-      };
+    Item.wheat => GameConfig.wheatSellPrice,
+    Item.flour => GameConfig.flourSellPrice,
+    Item.bread => GameConfig.breadSellPrice,
+  };
 }
 
 /// Placeholder in messages that the UI replaces with a coin icon.

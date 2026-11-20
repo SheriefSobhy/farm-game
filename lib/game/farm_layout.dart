@@ -1,50 +1,39 @@
-import 'dart:math';
 import 'dart:ui';
 
-import 'package:flame/components.dart';
+/// Places on the farm that can be tapped.
+enum FarmSpot { barn, market, mill, oven }
 
-import '../game_config.dart';
+/// Where everything sits on the farm, in "world units" (1 unit = 1 pixel of
+/// the 16px pixel art). The camera scales the whole world to fit the screen.
+abstract final class FarmLayout {
+  static const double worldWidth = 192;
+  static const double worldHeight = 352;
 
-/// Where everything sits on the farm screen, computed from the game size.
-/// Shared by the background and the plots so they always line up.
-class FarmLayout {
-  FarmLayout(Vector2 size)
-      : width = size.x,
-        height = size.y {
-    topSpace = (height * 0.24).clamp(96.0, 180.0);
-    const pad = 16.0;
-    gap = (width * 0.03).clamp(8.0, 14.0);
-    const cols = GameConfig.gridColumns;
-    final rows = (GameConfig.maxPlots / cols).ceil();
-    cell = max(
-      24.0,
-      min(
-        (width - pad * 2 - gap * (cols - 1)) / cols,
-        (height - topSpace - pad - gap * (rows - 1)) / rows,
-      ),
-    );
-    final gridW = cell * cols + gap * (cols - 1);
-    final gridH = cell * rows + gap * (rows - 1);
-    final left = (width - gridW) / 2;
-    final top = topSpace + max(0.0, (height - topSpace - pad - gridH) / 2);
-    grid = Rect.fromLTWH(left, top, gridW, gridH);
-  }
+  static const double plotSize = 32;
+  static const double plotGap = 4;
+  static const Offset fieldOrigin = Offset(8, 118);
 
-  final double width;
-  final double height;
-  late final double topSpace;
-  late final double gap;
-  late final double cell;
-  late final Rect grid;
+  /// Top-left corner of plot [i] (3 columns).
+  static Offset plotTopLeft(int i) => Offset(
+    fieldOrigin.dx + (i % 3) * (plotSize + plotGap),
+    fieldOrigin.dy + (i ~/ 3) * (plotSize + plotGap),
+  );
 
-  /// Center point of plot number [index].
-  Vector2 cellCenter(int index) {
-    const cols = GameConfig.gridColumns;
-    final col = index % cols;
-    final row = index ~/ cols;
-    return Vector2(
-      grid.left + col * (cell + gap) + cell / 2,
-      grid.top + row * (cell + gap) + cell / 2,
-    );
-  }
+  static Rect plotRect(int i) =>
+      plotTopLeft(i) & const Size(plotSize, plotSize);
+
+  /// Area of each building on the farm (top-left + size of its picture).
+  static const Map<FarmSpot, Rect> spots = {
+    FarmSpot.barn: Rect.fromLTWH(6, -6, 48, 112),
+    FarmSpot.market: Rect.fromLTWH(136, 58, 48, 42),
+    FarmSpot.mill: Rect.fromLTWH(140, 112, 32, 46),
+    FarmSpot.oven: Rect.fromLTWH(134, 176, 44, 42),
+  };
+
+  /// Blade hub of the windmill, relative to the tower's top-left.
+  static const Offset millHub = Offset(16, 13);
+
+  /// Fire opening and chimney top of the oven, relative to its top-left.
+  static const Rect ovenMouth = Rect.fromLTWH(15, 23, 14, 13);
+  static const Offset ovenChimney = Offset(34, 1);
 }
