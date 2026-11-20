@@ -28,21 +28,17 @@ class SoundService extends ChangeNotifier {
       // Let the player's own music keep playing alongside the game sounds.
       try {
         await AudioPlayer.global.setAudioContext(
-          AudioContextConfig(
-            focus: AudioContextConfigFocus.mixWithOthers,
-          ).build(),
+          AudioContextConfig(focus: AudioContextConfigFocus.mixWithOthers).build(),
         );
       } catch (e) {
         debugPrint('Could not set audio context: $e');
       }
     }
     // Preload in the background so the first sound has no delay.
-    FlameAudio.audioCache
-        .loadAll([for (final s in Sfx.values) _file(s)])
-        .catchError((Object e) {
-          debugPrint('Could not preload sounds: $e');
-          return <Uri>[];
-        });
+    FlameAudio.audioCache.loadAll([for (final s in Sfx.values) _file(s)]).catchError((Object e) {
+      debugPrint('Could not preload sounds: $e');
+      return <Uri>[];
+    });
   }
 
   /// Call on the first user tap. Safe to call many times.
@@ -61,10 +57,10 @@ class SoundService extends ChangeNotifier {
 
   void play(Sfx sfx) {
     if (!_enabled || !_unlocked) return;
-    FlameAudio.play(_file(sfx), volume: _volume(sfx)).then<void>(
-      (_) {},
-      onError: (Object e) => debugPrint('Could not play ${sfx.name}: $e'),
-    );
+    FlameAudio.play(
+      _file(sfx),
+      volume: _volume(sfx),
+    ).then<void>((_) {}, onError: (Object e) => debugPrint('Could not play ${sfx.name}: $e'));
   }
 
   static String _file(Sfx s) => '${s.name}.wav';

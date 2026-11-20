@@ -53,8 +53,7 @@ class Px {
   final int w, h;
   final Uint32List p;
 
-  int get(int x, int y) =>
-      (x < 0 || y < 0 || x >= w || y >= h) ? 0 : p[y * w + x];
+  int get(int x, int y) => (x < 0 || y < 0 || x >= w || y >= h) ? 0 : p[y * w + x];
   void set(int x, int y, String c) {
     if (x < 0 || y < 0 || x >= w || y >= h) return;
     p[y * w + x] = pal[c]!;
@@ -68,14 +67,7 @@ class Px {
     }
   }
 
-  void ellipse(
-    double cx,
-    double cy,
-    double rx,
-    double ry,
-    String c, {
-    bool topHalf = false,
-  }) {
+  void ellipse(double cx, double cy, double rx, double ry, String c, {bool topHalf = false}) {
     for (var j = 0; j < h; j++) {
       for (var i = 0; i < w; i++) {
         final dx = (i + 0.5 - cx) / rx;
@@ -102,10 +94,7 @@ class Px {
     for (var j = 0; j < h; j++) {
       for (var i = 0; i < w; i++) {
         if (get(i, j) != 0) continue;
-        if (get(i - 1, j) != 0 ||
-            get(i + 1, j) != 0 ||
-            get(i, j - 1) != 0 ||
-            get(i, j + 1) != 0) {
+        if (get(i - 1, j) != 0 || get(i + 1, j) != 0 || get(i, j - 1) != 0 || get(i, j + 1) != 0) {
           out.add(j * w + i);
         }
       }
@@ -750,8 +739,7 @@ void _buildings() {
 
 void _pack() {
   const atlasW = 256;
-  final names = sprites.keys.toList()
-    ..sort((a, b) => sprites[b]!.h.compareTo(sprites[a]!.h));
+  final names = sprites.keys.toList()..sort((a, b) => sprites[b]!.h.compareTo(sprites[a]!.h));
   final rects = <String, List<int>>{};
   var x = 0, y = 0, rowH = 0;
   for (final n in names) {
@@ -783,15 +771,11 @@ void _pack() {
   final sorted = rects.keys.toList()..sort();
   for (final n in sorted) {
     final r = rects[n]!;
-    b.writeln(
-      '  static const $n = Rect.fromLTWH(${r[0]}, ${r[1]}, ${r[2]}, ${r[3]});',
-    );
+    b.writeln('  static const $n = Rect.fromLTWH(${r[0]}, ${r[1]}, ${r[2]}, ${r[3]});');
   }
   b.writeln('}');
   File('lib/art/extra_atlas.dart').writeAsStringSync(b.toString());
-  stdout.writeln(
-    'Wrote ${sprites.length} sprites into a ${atlasW}x$atlasH atlas.',
-  );
+  stdout.writeln('Wrote ${sprites.length} sprites into a ${atlasW}x$atlasH atlas.');
 }
 
 List<int> _png(Px img) {
@@ -818,12 +802,7 @@ List<int> _png(Px img) {
   return out.toBytes();
 }
 
-List<int> _u32(int v) => [
-  (v >> 24) & 255,
-  (v >> 16) & 255,
-  (v >> 8) & 255,
-  v & 255,
-];
+List<int> _u32(int v) => [(v >> 24) & 255, (v >> 16) & 255, (v >> 8) & 255, v & 255];
 
 int _crc(List<int> bytes) {
   var c = 0xFFFFFFFF;

@@ -1,87 +1,105 @@
 import '../game_config.dart';
-import 'item.dart';
+import 'defs.dart';
 
-/// What a building costs and what it converts.
-class Recipe {
-  const Recipe({
-    required this.buildingName,
-    required this.actionVerb,
-    required this.busyLabel,
-    required this.price,
-    required this.input,
-    required this.inputAmount,
-    required this.output,
-    required this.outputAmount,
-    required this.duration,
-  });
-
-  final String buildingName;
-  final String actionVerb;
-  final String busyLabel;
-  final int price;
-  final Item input;
-  final int inputAmount;
-  final Item output;
-  final int outputAmount;
-  final Duration duration;
-
-  static const mill = Recipe(
-    buildingName: 'Mill',
-    actionVerb: 'Grind',
-    busyLabel: 'Grinding...',
-    price: GameConfig.millPrice,
-    input: Item.wheat,
-    inputAmount: GameConfig.millWheatInput,
-    output: Item.flour,
-    outputAmount: GameConfig.millFlourOutput,
-    duration: GameConfig.millTime,
-  );
-
-  static const oven = Recipe(
-    buildingName: 'Oven',
-    actionVerb: 'Bake',
-    busyLabel: 'Baking...',
-    price: GameConfig.ovenPrice,
-    input: Item.flour,
-    inputAmount: GameConfig.ovenFlourInput,
-    output: Item.bread,
-    outputAmount: GameConfig.ovenBreadOutput,
-    duration: GameConfig.ovenTime,
-  );
+/// Looks up a recipe by id.
+RecipeDef? recipeById(String id) {
+  for (final r in GameConfig.recipes) {
+    if (r.id == id) return r;
+  }
+  return null;
 }
 
-/// A building (mill or oven) that runs one batch at a time.
+BuildingDef buildingDef(BuildingKind kind) =>
+    GameConfig.buildings.firstWhere((b) => b.kind == kind);
+
+/// One batch in a building: it is ready at [endMs].
+class Job {
+  Job(this.recipe, this.endMs);
+
+  final RecipeDef recipe;
+  int endMs;
+
+  bool isReady(int nowMs) => endMs <= nowMs;
+
+  int get startMs => endMs - recipe.time.inMilliseconds;
+
+  double progress(int nowMs) => ((nowMs - startMs) / recipe.time.inMilliseconds).clamp(0.0, 1.0);
+
+  Map<String, dynamic> toJson() => {'r': recipe.id, 'end': endMs};
+}
+
+/// A building (mill, oven, ...) with a queue of jobs.
+///
+/// Jobs run one after another. Finished products wait in the building until
+/// the player collects them (they need room in the barn).
 class ProductionBuilding {
-  ProductionBuilding(this.recipe);
+  ProductionBuilding(this.kind);
 
-  final Recipe recipe;
+  final BuildingKind kind;
   bool owned = false;
+  final List<Job> jobs = [];
 
-  /// Wall-clock time (ms since epoch) when the current batch started.
-  int? jobStartedAtMs;
+  /// Extra queue slots bought with upgrades.
+  int extraSlots = 0;
 
-  bool get isWorking => jobStartedAtMs != null;
+  BuildingDef get def => buildingDef(kind);
+  String get name => def.name;
 
-  int get _durationMs => recipe.duration.inMilliseconds;
+  int get slots => GameConfig.queueSlots + extraSlots;
 
-  double progress(int nowMs) {
-    if (jobStartedAtMs == null) return 0;
-    return ((nowMs - jobStartedAtMs!) / _durationMs).clamp(0.0, 1.0);
+  List<RecipeDef> get recipes => GameConfig.recipes.where((r) => r.building == kind).toList();
+
+  bool get isFull => jobs.length >= slots;
+
+  /// The job being worked on right now (not finished yet).
+  Job? working(int nowMs) {
+    for (final j in jobs) {
+      if (!j.isReady(nowMs)) return j;
+    }
+    return null;
   }
 
-  int remainingMs(int nowMs) {
-    if (jobStartedAtMs == null) return 0;
-    return (jobStartedAtMs! + _durationMs - nowMs).clamp(0, _durationMs);
+  bool isWorking(int nowMs) => working(nowMs) != null;
+
+  List<Job> ready(int nowMs) => jobs.where((j) => j.isReady(nowMs)).toList();
+
+  int readyCount(int nowMs) => jobs.where((j) => j.isReady(nowMs)).length;
+
+  /// When a newly added job would finish.
+  int nextEnd(int nowMs, RecipeDef r) {
+    final lastEnd = jobs.isEmpty ? nowMs : jobs.last.endMs;
+    final start = lastEnd > nowMs ? lastEnd : nowMs;
+    return start + r.time.inMilliseconds;
   }
 
   Map<String, dynamic> toJson() => {
     'owned': owned,
-    'jobStartedAtMs': jobStartedAtMs,
+    'jobs': [for (final j in jobs) j.toJson()],
+    'extraSlots': extraSlots,
   };
 
+  /// Reads the save. Also understands the old mill/oven format
+  /// ({"owned": true, "jobStartedAtMs": 123}).
   void loadFromJson(Map<String, dynamic>? json) {
     owned = json?['owned'] == true;
-    final started = json?['jobStartedAtMs'];
-    jobStartedAtMs = owned && started is int ? started : null;
+    jobs.clear();
+    extraSlots = 0;
+    final e = json?['extraSlots'];
+    if (e is int && e >= 0) extraSlots = e;
+    final list = json?['jobs'];
+    if (list is List) {
+      for (final j in list) {
+        if (j is! Map) continue;
+        final r = recipeById('${j['r']}');
+        final end = j['end'];
+        if (r != null && r.building == kind && end is int) jobs.add(Job(r, end));
+      }
+    }
+    final oldStart = json?['jobStartedAtMs'];
+    if (oldStart is int && recipes.isNotEmpty) {
+      final r = recipes.first;
+      jobs.add(Job(r, oldStart + r.time.inMilliseconds));
+    }
+    if (!owned) jobs.clear();
   }
 }

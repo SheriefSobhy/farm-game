@@ -40,11 +40,7 @@ ParticleSystemComponent pixelBurst(
             renderer: (c, p) {
               final o = (1 - p.progress * p.progress).clamp(0.0, 1.0);
               c.drawRect(
-                Rect.fromCenter(
-                  center: Offset.zero,
-                  width: s + 1,
-                  height: s + 1,
-                ),
+                Rect.fromCenter(center: Offset.zero, width: s + 1, height: s + 1),
                 Paint()..color = Palette.outline.withValues(alpha: o),
               );
               c.drawRect(
@@ -60,11 +56,8 @@ ParticleSystemComponent pixelBurst(
 }
 
 /// Golden grains bursting out of a harvested plot.
-ParticleSystemComponent grainBurst(Vector2 at) => pixelBurst(
-  at,
-  colors: const [Palette.gold, Palette.goldDark, Color(0xFFF7C282)],
-  count: 18,
-);
+ParticleSystemComponent grainBurst(Vector2 at) =>
+    pixelBurst(at, colors: const [Palette.gold, Palette.goldDark, Color(0xFFF7C282)], count: 18);
 
 /// Little clods of dirt hopping up when seeds are planted.
 ParticleSystemComponent dirtPuff(Vector2 at) => pixelBurst(
@@ -90,12 +83,8 @@ ParticleSystemComponent sparkleBurst(Vector2 at) => pixelBurst(
 
 /// "+3 [wheat]" or "-5 [coin]" that pops, floats up and fades out.
 class FloatingLabel extends PositionComponent {
-  FloatingLabel({
-    required this.text,
-    required this.icon,
-    required Vector2 start,
-    this.fontSize = 9,
-  }) : super(position: start.clone(), anchor: Anchor.center, priority: 1100) {
+  FloatingLabel({required this.text, required this.icon, required Vector2 start, this.fontSize = 9})
+    : super(position: start.clone(), anchor: Anchor.center, priority: 1100) {
     _startY = start.y;
     _paint = TextPaint(style: AppText.light(fontSize, weight: 700));
   }
@@ -119,25 +108,15 @@ class FloatingLabel extends PositionComponent {
 
   @override
   void render(Canvas canvas) {
-    final fade = _age < _life * 0.6
-        ? 1.0
-        : 1 - (_age - _life * 0.6) / (_life * 0.4);
+    final fade = _age < _life * 0.6 ? 1.0 : 1 - (_age - _life * 0.6) / (_life * 0.4);
     final pop = Curves.elasticOut.transform((_age / 0.4).clamp(0.0, 1.0));
     final metrics = _paint.getLineMetrics(text);
     final iconSize = fontSize * 1.3;
     final total = metrics.width + iconSize * 1.1;
 
-    canvas.saveLayer(
-      null,
-      Paint()..color = Color.fromRGBO(0, 0, 0, fade.clamp(0.0, 1.0)),
-    );
+    canvas.saveLayer(null, Paint()..color = Color.fromRGBO(0, 0, 0, fade.clamp(0.0, 1.0)));
     canvas.scale(pop, pop);
-    _paint.render(
-      canvas,
-      text,
-      Vector2(-total / 2, 0),
-      anchor: Anchor.centerLeft,
-    );
+    _paint.render(canvas, text, Vector2(-total / 2, 0), anchor: Anchor.centerLeft);
     paintGameIcon(
       canvas,
       Rect.fromCenter(

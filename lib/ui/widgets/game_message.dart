@@ -12,11 +12,7 @@ import 'icon_text.dart';
 
 /// Plays the right sound for [result] and shows its message (if any).
 /// [successSound] is played when the action worked.
-void showGameMessage(
-  BuildContext context,
-  ActionResult result, {
-  Sfx successSound = Sfx.coin,
-}) {
+void showGameMessage(BuildContext context, ActionResult result, {Sfx successSound = Sfx.coin}) {
   final scope = GameScope.of(context);
   scope.sound.play(result.ok ? successSound : Sfx.error);
   scope.toasts.show(result);
@@ -107,20 +103,13 @@ class _ToastCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(20),
         border: Border.all(color: Palette.woodDark, width: 4),
         boxShadow: const [
-          BoxShadow(
-            color: Color(0x445A3A22),
-            blurRadius: 16,
-            offset: Offset(0, 6),
-          ),
+          BoxShadow(color: Color(0x445A3A22), blurRadius: 16, offset: Offset(0, 6)),
         ],
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          GameIcon(
-            result.ok ? GameIconType.check : GameIconType.warning,
-            size: 34,
-          ),
+          GameIcon(result.ok ? GameIconType.check : GameIconType.warning, size: 34),
           const SizedBox(width: 10),
           Flexible(
             child: IconText(

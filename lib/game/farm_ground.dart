@@ -46,9 +46,7 @@ class FarmGround extends PositionComponent {
   }
 
   static bool _blocked(Rect r) {
-    if (r.overlaps(
-      FarmLayout.plotRect(0).expandToInclude(FarmLayout.plotRect(8)).inflate(4),
-    )) {
+    if (r.overlaps(FarmLayout.plotRect(0).expandToInclude(FarmLayout.plotRect(8)).inflate(4))) {
       return true;
     }
     for (final s in FarmLayout.spots.values) {
@@ -64,16 +62,14 @@ class FarmGround extends PositionComponent {
     for (var y = -m; y < FarmLayout.worldHeight + m; y += 16) {
       for (var x = -m; x < FarmLayout.worldWidth + m; x += 16) {
         final roll = rnd.nextDouble();
-        final tile = roll < 0.18
-            ? S.grassTufts
-            : (roll < 0.24 ? S.grassFlowers : S.grass);
+        final tile = roll < 0.18 ? S.grassTufts : (roll < 0.24 ? S.grassFlowers : S.grass);
         final r = Rect.fromLTWH(x, y, 16, 16);
         Art.draw(c, _blocked(r) && tile == S.grassFlowers ? S.grass : tile, r);
       }
     }
 
     // a dirt path from the barn door down between the field and buildings
-    for (var y = 112.0; y < 296; y += 16) {
+    for (var y = 112.0; y < 284; y += 16) {
       Art.at(c, S.path, 118, y);
     }
     for (var x = 22.0; x < 118; x += 16) {
@@ -85,12 +81,7 @@ class FarmGround extends PositionComponent {
     final border = <(Spr, double, double)>[];
     final trees = [S.pine, S.roundTree, S.bigTree, S.pine, S.autumnTree];
     for (var x = -m; x < FarmLayout.worldWidth + m; x += 12) {
-      for (final y in [
-        -30.0,
-        -18.0,
-        FarmLayout.worldHeight + 2,
-        FarmLayout.worldHeight + 14,
-      ]) {
+      for (final y in [-30.0, -18.0, FarmLayout.worldHeight + 2, FarmLayout.worldHeight + 14]) {
         border.add((
           trees[rnd.nextInt(trees.length)],
           x + rnd.nextDouble() * 5,
@@ -99,12 +90,7 @@ class FarmGround extends PositionComponent {
       }
     }
     for (var y = -30.0; y < FarmLayout.worldHeight + 10; y += 12) {
-      for (final x in [
-        -34.0,
-        -20.0,
-        FarmLayout.worldWidth + 4,
-        FarmLayout.worldWidth + 18,
-      ]) {
+      for (final x in [-34.0, -20.0, FarmLayout.worldWidth + 4, FarmLayout.worldWidth + 18]) {
         border.add((
           trees[rnd.nextInt(trees.length)],
           x + rnd.nextDouble() * 5,
@@ -125,14 +111,14 @@ class FarmGround extends PositionComponent {
       (S.autumnTree, 120.0, -4.0),
       (S.pine, 160.0, 0.0),
       (S.roundTree, 176.0, 22.0),
-      (S.beehive, 62.0, 26.0),
-      (S.sunflower, 64.0, 74.0),
-      (S.sunflower, 76.0, 78.0),
+      (S.beehive, 66.0, 22.0),
+      (S.sunflower, 108.0, 64.0),
+      (S.sunflower, 112.0, 80.0),
       (S.berryBush, 106.0, 34.0),
       (S.hayBale, 124.0, 38.0),
-      (S.barrel, 116.0, 84.0),
-      (S.bush, 2.0, 226.0),
-      (S.rock, 100.0, 228.0),
+      (S.barrel, 66.0, 84.0),
+      (S.bush, 2.0, 222.0),
+      (S.rock, 100.0, 224.0),
       (S.mushrooms, 176.0, 160.0),
       (S.sunflower, 180.0, 222.0),
     ];
@@ -140,38 +126,32 @@ class FarmGround extends PositionComponent {
       Art.at(c, s, x, y);
     }
 
-    // a fenced pasture along the bottom
-    fence(c, 6, 290, 11, 4);
-    Art.at(c, S.waterTroughL, 140, 308);
-    Art.at(c, S.waterTroughR, 156, 308);
-    Art.at(c, S.hayBale, 30, 306);
+    // two fenced pens along the bottom: chickens (left) and cows (right)
+    final chickens = FarmLayout.spots[FarmSpot.chickens]!;
+    final cows = FarmLayout.spots[FarmSpot.cows]!;
+    fence(c, chickens.left, chickens.top, (chickens.width / 16).round(), 4);
+    fence(c, cows.left, cows.top, (cows.width / 16).round(), 4);
 
-    // a strip of garden between the buildings and the pasture
+    // a little garden between the buildings and the pens
     final strip = [
-      (S.bush, 4.0, 236.0),
-      (S.sunflower, 24.0, 240.0),
-      (S.berryBush, 44.0, 246.0),
-      (S.rock, 70.0, 256.0),
-      (S.sunflower, 88.0, 238.0),
-      (S.bush, 100.0, 262.0),
-      (S.mushrooms, 146.0, 246.0),
-      (S.berryBush, 160.0, 262.0),
-      (S.bush, 176.0, 240.0),
-      (S.sprout, 60.0, 272.0),
+      (S.sunflower, 0.0, 250.0),
+      (S.berryBush, 48.0, 258.0),
+      (S.bush, 104.0, 262.0),
+      (S.mushrooms, 106.0, 236.0),
+      (S.sprout, 50.0, 238.0),
+      (S.sunflower, 186.0, 266.0),
     ];
     for (final (s, x, y) in strip) {
       Art.at(c, s, x, y);
     }
   }
 
-  /// Draws a wooden fence rectangle of [cols] x [rows] tiles with a gate.
+  /// Draws a wooden fence rectangle of [cols] x [rows] tiles.
   static void fence(Canvas c, double x, double y, int cols, int rows) {
     for (var i = 0; i < cols; i++) {
       final top = i == 0 ? S.fenceTL : (i == cols - 1 ? S.fenceTR : S.fenceH);
-      final bottom = i == 0
-          ? S.fenceBL
-          : (i == cols - 1 ? S.fenceBR : S.fenceH);
-      Art.at(c, i == 7 ? S.fenceGate : top, x + i * 16, y);
+      final bottom = i == 0 ? S.fenceBL : (i == cols - 1 ? S.fenceBR : S.fenceH);
+      Art.at(c, top, x + i * 16, y);
       Art.at(c, bottom, x + i * 16, y + (rows - 1) * 16);
     }
     for (var j = 1; j < rows - 1; j++) {

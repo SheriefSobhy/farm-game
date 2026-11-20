@@ -8,13 +8,13 @@ import 'package:flutter/painting.dart';
 import '../art/palette.dart';
 import '../art/sprites.dart';
 import '../art/text_styles.dart';
+import '../models/item.dart';
 import 'farm_game.dart';
 import 'farm_layout.dart';
 
 /// One field plot (32x32 units): two soil beds with four plants.
 /// Shows a "for sale" sign for the next plot and a lock for later ones.
-class PlotComponent extends PositionComponent
-    with TapCallbacks, HasGameReference<FarmGame> {
+class PlotComponent extends PositionComponent with TapCallbacks, HasGameReference<FarmGame> {
   PlotComponent({required this.index})
     : super(
         position: Vector2(
@@ -95,7 +95,7 @@ class PlotComponent extends PositionComponent
 
     final p = plot.progress(now);
     final stage = plot.isReady(now) ? 2 : (p < 0.5 ? 0 : 1);
-    final sprite = S.wheatStages[stage];
+    final sprite = (plot.crop == Item.corn ? S.cornStages : S.wheatStages)[stage];
     final grow = Curves.easeOutBack.transform(_plantPop);
     for (var k = 0; k < 4; k++) {
       final cx = (k % 2) * 16.0 + 8;
@@ -118,8 +118,7 @@ class PlotComponent extends PositionComponent
         final a = sin(tw / 0.5 * pi);
         final sx = 6 + ((index * 7 + (_t * 1.6).floor() * 11) % 20).toDouble();
         final sy = 2 + ((index * 5 + (_t * 1.6).floor() * 7) % 20).toDouble();
-        final paint = Paint()
-          ..color = const Color(0xFFFFFFFF).withValues(alpha: a);
+        final paint = Paint()..color = const Color(0xFFFFFFFF).withValues(alpha: a);
         c.drawRect(Rect.fromLTWH(sx, sy - 1, 1, 3), paint);
         c.drawRect(Rect.fromLTWH(sx - 1, sy, 3, 1), paint);
       }
@@ -128,12 +127,7 @@ class PlotComponent extends PositionComponent
       const bar = Rect.fromLTWH(4, 28, 24, 4);
       c.drawRect(bar, Paint()..color = Palette.outline);
       c.drawRect(
-        Rect.fromLTWH(
-          bar.left + 1,
-          bar.top + 1,
-          (bar.width - 2) * p,
-          bar.height - 2,
-        ),
+        Rect.fromLTWH(bar.left + 1, bar.top + 1, (bar.width - 2) * p, bar.height - 2),
         Paint()..color = Palette.gold,
       );
     }
@@ -152,10 +146,7 @@ class PlotComponent extends PositionComponent
       Rect.fromLTWH(sign.left, sign.bottom - 2, sign.width, 2),
       Paint()..color = Palette.paperDark,
     );
-    c.drawRect(
-      const Rect.fromLTWH(15, 22, 2, 8),
-      Paint()..color = Palette.outline,
-    );
+    c.drawRect(const Rect.fromLTWH(15, 22, 2, 8), Paint()..color = Palette.outline);
     Art.draw(c, S.coin, const Rect.fromLTWH(4, 11, 9, 9));
     _priceText.render(c, '$price', Vector2(21, 15.5), anchor: Anchor.center);
     Art.draw(c, S.plus, const Rect.fromLTWH(20, 0, 12, 12));

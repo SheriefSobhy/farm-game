@@ -92,6 +92,7 @@ abstract final class S {
   static final bag = _t(107);
   static final bucketWater = _f(73);
   static final farmer = _f(109);
+  static final farmerGirl = _f(108);
 
   // --- fence (Tiny Town)
   static final fenceTL = _t(44);
@@ -176,13 +177,7 @@ abstract final class Art {
     ..isAntiAlias = false;
 
   /// Draws [s] into [dst]. Nearest-neighbour scaling keeps pixels crisp.
-  static void draw(
-    ui.Canvas canvas,
-    Spr s,
-    ui.Rect dst, {
-    double opacity = 1,
-    ui.Paint? paint,
-  }) {
+  static void draw(ui.Canvas canvas, Spr s, ui.Rect dst, {double opacity = 1, ui.Paint? paint}) {
     final img = _images[s.sheet];
     if (img == null) return;
     var p = paint ?? _paint;
@@ -204,13 +199,7 @@ abstract final class Art {
     double y, {
     double opacity = 1,
     ui.Paint? paint,
-  }) => draw(
-    canvas,
-    s,
-    ui.Rect.fromLTWH(x, y, s.width, s.height),
-    opacity: opacity,
-    paint: paint,
-  );
+  }) => draw(canvas, s, ui.Rect.fromLTWH(x, y, s.width, s.height), opacity: opacity, paint: paint);
 
   /// Draws [s] so it fits inside [box] (keeping its shape), centered.
   static void fit(ui.Canvas canvas, Spr s, ui.Rect box, {double opacity = 1}) {
@@ -230,13 +219,7 @@ abstract final class Art {
   /// Draws the composed barn (48x112 units) with its top-left at [x], [y].
   static void barn(ui.Canvas canvas, double x, double y, {ui.Paint? paint}) {
     for (final t in S.barnTiles) {
-      at(
-        canvas,
-        Spr.tile(Sheet.farm, t[0]),
-        x + t[1] * 16,
-        y + t[2] * 16,
-        paint: paint,
-      );
+      at(canvas, Spr.tile(Sheet.farm, t[0]), x + t[1] * 16, y + t[2] * 16, paint: paint);
     }
   }
 }

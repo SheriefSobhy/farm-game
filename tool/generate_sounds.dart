@@ -40,9 +40,7 @@ List<double> plant() => render(0.16, (t, d) {
 List<double> harvest() => render(0.32, (t, d) {
   final rustle = noise() * env(t, 0.12, attack: 0.002, curve: 2) * 0.25;
   final n1 = tone(660, t) * env(t, 0.14, attack: 0.003, curve: 3);
-  final n2 = t > 0.08
-      ? tone(990, t - 0.08) * env(t - 0.08, 0.24, attack: 0.003, curve: 3)
-      : 0.0;
+  final n2 = t > 0.08 ? tone(990, t - 0.08) * env(t - 0.08, 0.24, attack: 0.003, curve: 3) : 0.0;
   return rustle + (n1 + n2) * 0.45;
 });
 
@@ -67,8 +65,7 @@ List<double> done() => render(0.75, (t, d) {
     if (t < start) continue;
     final lt = t - start;
     v +=
-        (sin(2 * pi * notes[i] * lt) +
-            0.4 * sin(2 * pi * notes[i] * 3 * lt) * exp(-lt * 12)) *
+        (sin(2 * pi * notes[i] * lt) + 0.4 * sin(2 * pi * notes[i] * 3 * lt) * exp(-lt * 12)) *
         env(lt, d - start, attack: 0.004, curve: 4);
   }
   return v * 0.3;
@@ -77,9 +74,7 @@ List<double> done() => render(0.75, (t, d) {
 /// Very short wooden "tock" for button taps.
 List<double> tap() => render(0.06, (t, d) {
   final f = 900 - 400 * (t / d);
-  return (sin(2 * pi * f * t) * 0.8 + noise() * 0.15) *
-      env(t, d, attack: 0.001, curve: 4) *
-      0.55;
+  return (sin(2 * pi * f * t) * 0.8 + noise() * 0.15) * env(t, d, attack: 0.001, curve: 4) * 0.55;
 });
 
 /// Gentle low "nuh-uh" for errors (not harsh).
@@ -93,8 +88,7 @@ List<double> error() => render(0.34, (t, d) {
 
 // --------------------------------------------------------------- helpers
 
-double tone(double f, double t) =>
-    sin(2 * pi * f * t) + 0.25 * sin(2 * pi * f * 2 * t);
+double tone(double f, double t) => sin(2 * pi * f * t) + 0.25 * sin(2 * pi * f * 2 * t);
 
 double triangle(double f, double t) {
   final p = (t * f) % 1.0;
@@ -104,12 +98,7 @@ double triangle(double f, double t) {
 double noise() => _rng.nextDouble() * 2 - 1;
 
 /// Quick attack, then a decay shaped by [curve] (higher = faster fade).
-double env(
-  double t,
-  double d, {
-  required double attack,
-  required double curve,
-}) {
+double env(double t, double d, {required double attack, required double curve}) {
   if (t < 0 || t > d) return 0;
   if (t < attack) return t / attack;
   final x = (t - attack) / (d - attack);

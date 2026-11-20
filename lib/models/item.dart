@@ -1,7 +1,7 @@
 import '../game_config.dart';
 
-/// Things the player can own and sell.
-enum Item { wheat, flour, bread }
+/// Things the player can store, use and sell.
+enum Item { wheat, corn, flour, bread, popcorn, chickenFeed, egg, cake, cowFeed, milk, cheese }
 
 extension ItemInfo on Item {
   /// Placeholder in messages that the UI replaces with this item's icon,
@@ -10,16 +10,22 @@ extension ItemInfo on Item {
 
   String get label => switch (this) {
     Item.wheat => 'Wheat',
+    Item.corn => 'Corn',
     Item.flour => 'Flour',
     Item.bread => 'Bread',
+    Item.popcorn => 'Popcorn',
+    Item.chickenFeed => 'Chicken feed',
+    Item.egg => 'Egg',
+    Item.cake => 'Cake',
+    Item.cowFeed => 'Cow feed',
+    Item.milk => 'Milk',
+    Item.cheese => 'Cheese',
   };
 
-  int get sellPrice => switch (this) {
-    Item.wheat => GameConfig.wheatSellPrice,
-    Item.flour => GameConfig.flourSellPrice,
-    Item.bread => GameConfig.breadSellPrice,
-  };
+  int get sellPrice => GameConfig.sellPrices[this]!;
 }
 
 /// Placeholder in messages that the UI replaces with a coin icon.
 const String coinToken = '{coin}';
+const String xpToken = '{star}';
+const String gemToken = '{gem}';

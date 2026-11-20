@@ -24,7 +24,13 @@ class MarketPanel extends StatelessWidget {
       builder: (context, _) => Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          for (final item in Item.values) _ItemRow(state: state, item: item),
+          for (final item in Item.values)
+            if (state.count(item) > 0 || item == Item.wheat) _ItemRow(state: state, item: item),
+          Text(
+            'Tip: orders on the board pay more than the market!',
+            textAlign: TextAlign.center,
+            style: AppText.style(14, weight: 500, color: Palette.textSoft),
+          ),
         ],
       ),
     );
@@ -41,12 +47,9 @@ class _ItemRow extends StatelessWidget {
     final result = state.sell(item, amount);
     showGameMessage(context, result);
     if (result.ok) {
-      GameScope.of(context).fx.flyFrom(
+      GameScope.of(
         context,
-        GameIconType.coin,
-        'coin',
-        count: amount.clamp(1, 5),
-      );
+      ).fx.flyFrom(context, GameIconType.coin, 'coin', count: amount.clamp(1, 5));
     }
   }
 
@@ -73,18 +76,11 @@ class _ItemRow extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  '${item.label}  x$owned',
-                  style: AppText.style(19, weight: 700),
-                ),
+                Text('${item.label}  x$owned', style: AppText.style(19, weight: 700)),
                 IconText(
                   '${item.sellPrice} $coinToken each',
                   textAlign: TextAlign.start,
-                  style: AppText.style(
-                    15,
-                    weight: 500,
-                    color: Palette.textSoft,
-                  ),
+                  style: AppText.style(15, weight: 500, color: Palette.textSoft),
                 ),
               ],
             ),
@@ -104,9 +100,7 @@ class _ItemRow extends StatelessWidget {
           SizedBox(
             width: 92,
             child: ChunkyButton(
-              label: owned > 0
-                  ? 'All ${owned * item.sellPrice}$coinToken'
-                  : 'All',
+              label: owned > 0 ? 'All ${owned * item.sellPrice}$coinToken' : 'All',
               height: 44,
               fontSize: 17,
               color: Palette.green,

@@ -27,7 +27,5 @@ class GameScope extends InheritedWidget {
 
   @override
   bool updateShouldNotify(GameScope oldWidget) =>
-      sound != oldWidget.sound ||
-      toasts != oldWidget.toasts ||
-      fx != oldWidget.fx;
+      sound != oldWidget.sound || toasts != oldWidget.toasts || fx != oldWidget.fx;
 }

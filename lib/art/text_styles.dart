@@ -9,9 +9,7 @@ class AppText {
   static const String family = 'Fredoka';
 
   /// Dark drop shadow that makes white text pop like a cartoon label.
-  static const List<Shadow> popShadow = [
-    Shadow(color: Color(0x8C3A1E0C), offset: Offset(0, 2)),
-  ];
+  static const List<Shadow> popShadow = [Shadow(color: Color(0x8C3A1E0C), offset: Offset(0, 2))];
 
   /// [weight] 300–700. Fredoka is a variable font, so the weight is applied
   /// through the 'wght' axis as well as [FontWeight].
@@ -33,10 +31,6 @@ class AppText {
     );
   }
 
-  static TextStyle light(double size, {double weight = 600}) => style(
-    size,
-    weight: weight,
-    color: const Color(0xFFFFFFFF),
-    shadows: popShadow,
-  );
+  static TextStyle light(double size, {double weight = 600}) =>
+      style(size, weight: weight, color: const Color(0xFFFFFFFF), shadows: popShadow);
 }

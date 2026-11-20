@@ -11,12 +11,7 @@ import 'widgets/fx_layer.dart';
 import 'widgets/game_message.dart';
 
 class FarmApp extends StatefulWidget {
-  const FarmApp({
-    super.key,
-    required this.state,
-    required this.saveService,
-    required this.sound,
-  });
+  const FarmApp({super.key, required this.state, required this.saveService, required this.sound});
 
   final GameState state;
   final SaveService saveService;
@@ -54,9 +49,7 @@ class _FarmAppState extends State<FarmApp> {
               constraints: const BoxConstraints(maxWidth: FarmApp.maxGameWidth),
               child: DecoratedBox(
                 decoration: const BoxDecoration(
-                  boxShadow: [
-                    BoxShadow(color: Color(0x553F2631), blurRadius: 24),
-                  ],
+                  boxShadow: [BoxShadow(color: Color(0x553F2631), blurRadius: 24)],
                 ),
                 child: ClipRect(
                   child: Material(
@@ -97,11 +90,7 @@ class _FarmAppState extends State<FarmApp> {
       // On wide screens (tablet, desktop browser) keep a phone-sized,
       // centered column. On a phone this has no visible effect.
       builder: (context, child) => _frame(context, child),
-      home: GameScreen(
-        state: widget.state,
-        saveService: widget.saveService,
-        sound: widget.sound,
-      ),
+      home: GameScreen(state: widget.state, saveService: widget.saveService, sound: widget.sound),
     );
   }
 }

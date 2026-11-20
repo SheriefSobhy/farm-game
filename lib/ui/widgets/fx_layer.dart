@@ -21,8 +21,7 @@ class FxController extends ChangeNotifier {
   GlobalKey target(String name) => _targets.putIfAbsent(name, GlobalKey.new);
 
   Offset? _centerOf(String name) {
-    final box =
-        _targets[name]?.currentContext?.findRenderObject() as RenderBox?;
+    final box = _targets[name]?.currentContext?.findRenderObject() as RenderBox?;
     if (box == null || !box.attached) return null;
     return box.localToGlobal(box.size.center(Offset.zero));
   }
@@ -33,34 +32,17 @@ class FxController extends ChangeNotifier {
     if (end == null) return;
     for (var i = 0; i < count; i++) {
       Future.delayed(Duration(milliseconds: 80 * i), () {
-        flights.add(
-          Flight(
-            _nextId++,
-            icon,
-            from + Offset((i - (count - 1) / 2) * 12, 0),
-            end,
-          ),
-        );
+        flights.add(Flight(_nextId++, icon, from + Offset((i - (count - 1) / 2) * 12, 0), end));
         notifyListeners();
       });
     }
   }
 
   /// Flies icons from the widget with [context] to target [to].
-  void flyFrom(
-    BuildContext context,
-    GameIconType icon,
-    String to, {
-    int count = 3,
-  }) {
+  void flyFrom(BuildContext context, GameIconType icon, String to, {int count = 3}) {
     final box = context.findRenderObject() as RenderBox?;
     if (box == null || !box.attached) return;
-    fly(
-      icon,
-      box.localToGlobal(box.size.center(Offset.zero)),
-      to,
-      count: count,
-    );
+    fly(icon, box.localToGlobal(box.size.center(Offset.zero)), to, count: count);
   }
 
   void _done(Flight f) {
@@ -82,9 +64,7 @@ class FxLayer extends StatelessWidget {
         listenable: controller,
         builder: (context, _) {
           final box = context.findRenderObject() as RenderBox?;
-          final origin = box != null && box.attached
-              ? box.localToGlobal(Offset.zero)
-              : Offset.zero;
+          final origin = box != null && box.attached ? box.localToGlobal(Offset.zero) : Offset.zero;
           return Stack(
             children: [
               for (final f in controller.flights)
@@ -103,12 +83,7 @@ class FxLayer extends StatelessWidget {
 }
 
 class _FlyingIcon extends StatelessWidget {
-  const _FlyingIcon({
-    super.key,
-    required this.flight,
-    required this.origin,
-    required this.onDone,
-  });
+  const _FlyingIcon({super.key, required this.flight, required this.origin, required this.onDone});
 
   final Flight flight;
   final Offset origin;
@@ -131,12 +106,8 @@ class _FlyingIcon extends StatelessWidget {
         onEnd: onDone,
         builder: (context, t, child) {
           final p = Offset(
-            (1 - t) * (1 - t) * a.dx +
-                2 * (1 - t) * t * control.dx +
-                t * t * b.dx,
-            (1 - t) * (1 - t) * a.dy +
-                2 * (1 - t) * t * control.dy +
-                t * t * b.dy,
+            (1 - t) * (1 - t) * a.dx + 2 * (1 - t) * t * control.dx + t * t * b.dx,
+            (1 - t) * (1 - t) * a.dy + 2 * (1 - t) * t * control.dy + t * t * b.dy,
           );
           final s = t < 0.15 ? 0.6 + t / 0.15 * 0.7 : 1.3 - (t - 0.15) * 0.6;
           return Transform.translate(

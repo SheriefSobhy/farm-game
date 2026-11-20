@@ -94,17 +94,10 @@ Spr? _single(GameIconType t) => switch (t) {
 };
 
 /// Paints icon [type] centered inside [rect]. Used by Flutter and Flame.
-void paintGameIcon(
-  Canvas canvas,
-  Rect rect,
-  GameIconType type, {
-  double opacity = 1,
-}) {
+void paintGameIcon(Canvas canvas, Rect rect, GameIconType type, {double opacity = 1}) {
   if (type == GameIconType.windmill) {
     // tower with its sails, as one picture (48 x 58 units)
-    final k = (rect.width / 48) < (rect.height / 58)
-        ? rect.width / 48
-        : rect.height / 58;
+    final k = (rect.width / 48) < (rect.height / 58) ? rect.width / 48 : rect.height / 58;
     canvas.save();
     canvas.translate(rect.center.dx - 24 * k, rect.center.dy - 29 * k);
     canvas.scale(k);
@@ -121,11 +114,7 @@ void paintGameIcon(
     Art.fit(
       canvas,
       S.arrowDown,
-      Rect.fromCenter(
-        center: Offset.zero,
-        width: rect.width,
-        height: rect.height,
-      ),
+      Rect.fromCenter(center: Offset.zero, width: rect.width, height: rect.height),
       opacity: opacity,
     );
     canvas.restore();
@@ -162,6 +151,5 @@ class _IconPainter extends CustomPainter {
       paintGameIcon(canvas, Offset.zero & size, type, opacity: opacity);
 
   @override
-  bool shouldRepaint(_IconPainter old) =>
-      old.type != type || old.opacity != opacity;
+  bool shouldRepaint(_IconPainter old) => old.type != type || old.opacity != opacity;
 }

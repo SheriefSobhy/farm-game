@@ -22,17 +22,12 @@ Future<void> openSheet(
     barrierColor: const Color(0x553F2631),
     elevation: 0,
     constraints: const BoxConstraints(maxWidth: 480),
-    builder: (sheetContext) =>
-        _Sheet(title: title, icon: icon, builder: builder),
+    builder: (sheetContext) => _Sheet(title: title, icon: icon, builder: builder),
   );
 }
 
 class _Sheet extends StatelessWidget {
-  const _Sheet({
-    required this.title,
-    required this.icon,
-    required this.builder,
-  });
+  const _Sheet({required this.title, required this.icon, required this.builder});
 
   final String title;
   final GameIconType icon;
@@ -136,11 +131,7 @@ class _XPainter extends CustomPainter {
       ..color = Colors.white
       ..strokeWidth = 4
       ..strokeCap = StrokeCap.square;
-    canvas.drawLine(
-      const Offset(5, 5),
-      Offset(size.width - 5, size.height - 5),
-      p,
-    );
+    canvas.drawLine(const Offset(5, 5), Offset(size.width - 5, size.height - 5), p);
     canvas.drawLine(Offset(size.width - 5, 5), Offset(5, size.height - 5), p);
   }
 

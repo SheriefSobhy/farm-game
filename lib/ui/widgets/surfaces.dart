@@ -3,9 +3,7 @@ import 'package:flutter/material.dart';
 import '../../art/palette.dart';
 
 /// Hard pixel-style drop shadow used by cards and panels.
-const List<BoxShadow> hardShadow = [
-  BoxShadow(color: Color(0x553F2631), offset: Offset(0, 4)),
-];
+const List<BoxShadow> hardShadow = [BoxShadow(color: Color(0x553F2631), offset: Offset(0, 4))];
 
 /// Cream "paper" card with a dark outline, matching the pixel art.
 class PaperCard extends StatelessWidget {
@@ -60,12 +58,7 @@ class WoodPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return CustomPaint(
-      painter: _WoodPainter(
-        planks: planks,
-        radius: radius,
-        nails: nails,
-        border: border,
-      ),
+      painter: _WoodPainter(planks: planks, radius: radius, nails: nails, border: border),
       child: Padding(padding: padding, child: child),
     );
   }
@@ -94,10 +87,7 @@ class _WoodPainter extends CustomPainter {
     final ph = size.height / planks;
     for (var i = 0; i < planks; i++) {
       final top = i * ph;
-      canvas.drawRect(
-        Rect.fromLTWH(0, top, size.width, 3),
-        Paint()..color = Palette.woodLight,
-      );
+      canvas.drawRect(Rect.fromLTWH(0, top, size.width, 3), Paint()..color = Palette.woodLight);
       canvas.drawRect(
         Rect.fromLTWH(0, top + ph - 3, size.width, 3),
         Paint()..color = Palette.woodDark,
@@ -135,10 +125,7 @@ class _WoodPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(_WoodPainter old) =>
-      old.planks != planks ||
-      old.radius != radius ||
-      old.nails != nails ||
-      old.border != border;
+      old.planks != planks || old.radius != radius || old.nails != nails || old.border != border;
 }
 
 /// Framed picture area for building illustrations in panels.

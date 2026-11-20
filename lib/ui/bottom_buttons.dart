@@ -9,13 +9,7 @@ import 'widgets/surfaces.dart';
 
 /// One big button in the bottom bar.
 class BarButton {
-  const BarButton(
-    this.icon,
-    this.label,
-    this.onTap, {
-    this.targetName,
-    this.badge = 0,
-  });
+  const BarButton(this.icon, this.label, this.onTap, {this.targetName, this.badge = 0});
   final GameIconType icon;
   final String label;
   final VoidCallback onTap;
@@ -43,9 +37,7 @@ class BottomButtons extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.fromLTRB(6, 7, 6, 7),
           child: Row(
-            children: [
-              for (final b in buttons) Expanded(child: _Button(button: b)),
-            ],
+            children: [for (final b in buttons) Expanded(child: _Button(button: b))],
           ),
         ),
       ),
@@ -100,9 +92,7 @@ class _ButtonState extends State<_Button> {
                   GameIcon(
                     b.icon,
                     size: 36,
-                    key: b.targetName == null
-                        ? null
-                        : scope.fx.target(b.targetName!),
+                    key: b.targetName == null ? null : scope.fx.target(b.targetName!),
                   ),
                   FittedBox(
                     fit: BoxFit.scaleDown,
@@ -111,8 +101,7 @@ class _ButtonState extends State<_Button> {
                 ],
               ),
             ),
-            if (b.badge > 0)
-              Positioned(right: -2, top: -6, child: RedBadge(count: b.badge)),
+            if (b.badge > 0) Positioned(right: -2, top: -6, child: RedBadge(count: b.badge)),
           ],
         ),
       ),
@@ -138,10 +127,7 @@ class RedBadge extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: Palette.outline, width: 2.5),
       ),
-      child: Text(
-        count > 9 ? '9+' : '$count',
-        style: AppText.light(13, weight: 700),
-      ),
+      child: Text(count > 9 ? '9+' : '$count', style: AppText.light(13, weight: 700)),
     );
   }
 }

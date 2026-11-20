@@ -105,17 +105,12 @@ class _ChunkyButtonState extends State<ChunkyButton> {
                         right: 4,
                         height: 4,
                         child: ColoredBox(
-                          color: Colors.white.withValues(
-                            alpha: enabled ? 0.3 : 0.15,
-                          ),
+                          color: Colors.white.withValues(alpha: enabled ? 0.3 : 0.15),
                         ),
                       ),
                       FittedBox(
                         fit: BoxFit.scaleDown,
-                        child: IconText(
-                          widget.label,
-                          style: AppText.light(widget.fontSize),
-                        ),
+                        child: IconText(widget.label, style: AppText.light(widget.fontSize)),
                       ),
                     ],
                   ),
