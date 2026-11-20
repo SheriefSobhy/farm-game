@@ -112,9 +112,11 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
     if (!mounted) return;
     widget.sound.play(Sfx.done);
     final names = unlocks.map((u) => u.name).join(', ');
-    GameScope.of(
-      context,
-    ).toasts.show(ActionResult.ok('Level $level! {star}${names.isEmpty ? '' : '  New: $names'}'));
+    GameScope.of(context).toasts.show(
+      ActionResult.ok(
+        'Level $level! +${GameConfig.levelUpGems} {gem}${names.isEmpty ? '' : '  New: $names'}',
+      ),
+    );
   }
 
   /// Flies icons from a spot on the farm to a UI target (barn, coins...).

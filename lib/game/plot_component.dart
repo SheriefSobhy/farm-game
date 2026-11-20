@@ -14,7 +14,8 @@ import 'farm_layout.dart';
 
 /// One field plot (32x32 units): two soil beds with four plants.
 /// Shows a "for sale" sign for the next plot and a lock for later ones.
-class PlotComponent extends PositionComponent with TapCallbacks, HasGameReference<FarmGame> {
+class PlotComponent extends PositionComponent
+    with TapCallbacks, DragCallbacks, HasGameReference<FarmGame> {
   PlotComponent({required this.index})
     : super(
         position: Vector2(
@@ -44,6 +45,24 @@ class PlotComponent extends PositionComponent with TapCallbacks, HasGameReferenc
 
   @override
   void onTapDown(TapDownEvent event) => game.handlePlotTap(this);
+
+  // Dragging a finger from this plot across the field plants or harvests
+  // every plot it passes over.
+  @override
+  void onDragStart(DragStartEvent event) {
+    super.onDragStart(event);
+    game.beginSwipe(index);
+  }
+
+  @override
+  void onDragUpdate(DragUpdateEvent event) =>
+      game.swipeAt(absolutePositionOf(event.localEndPosition));
+
+  @override
+  void onDragEnd(DragEndEvent event) {
+    super.onDragEnd(event);
+    game.endSwipe();
+  }
 
   @override
   void update(double dt) {

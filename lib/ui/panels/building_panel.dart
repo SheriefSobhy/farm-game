@@ -154,26 +154,56 @@ class _QueueCard extends StatelessWidget {
                 ),
             ],
           ),
-          const SizedBox(height: 8),
-          if (ready > 0)
+          const SizedBox(height: 6),
+          Text(
+            working != null
+                ? '${b.def.verb}... ${((working.endMs - now) / 1000).ceil()}s left'
+                : (ready > 0 ? 'All done!' : 'Pick something to make below.'),
+            style: AppText.style(16, weight: 500, color: Palette.textSoft),
+          ),
+          const SizedBox(height: 6),
+          Row(
+            children: [
+              if (ready > 0)
+                Expanded(
+                  child: ChunkyButton(
+                    label: 'Collect $ready',
+                    height: 44,
+                    fontSize: 18,
+                    color: Palette.gold,
+                    darkColor: Palette.goldDark,
+                    onPressed: onCollect,
+                  ),
+                ),
+              if (ready > 0 && working != null) const SizedBox(width: 8),
+              if (working != null)
+                Expanded(
+                  child: ChunkyButton(
+                    label: 'Speed up ${state.speedUpCost(b)} $gemToken',
+                    height: 44,
+                    fontSize: 18,
+                    color: Palette.purple,
+                    darkColor: Palette.purpleDark,
+                    onPressed: () =>
+                        showGameMessage(context, state.speedUp(b), successSound: Sfx.done),
+                  ),
+                ),
+            ],
+          ),
+          if (state.queueUpgradePrice(b) != null) ...[
+            const SizedBox(height: 8),
             SizedBox(
               width: double.infinity,
               child: ChunkyButton(
-                label: 'Collect $ready',
-                height: 46,
-                fontSize: 19,
-                color: Palette.gold,
-                darkColor: Palette.goldDark,
-                onPressed: onCollect,
+                label: '+1 slot  ${state.queueUpgradePrice(b)} $coinToken',
+                height: 40,
+                fontSize: 16,
+                color: Palette.blue,
+                darkColor: Palette.blueDark,
+                onPressed: () => showGameMessage(context, state.upgradeQueue(b)),
               ),
-            )
-          else
-            Text(
-              working != null
-                  ? '${b.def.verb}... ${((working.endMs - now) / 1000).ceil()}s left'
-                  : 'Pick something to make below.',
-              style: AppText.style(16, weight: 500, color: Palette.textSoft),
             ),
+          ],
         ],
       ),
     );

@@ -94,7 +94,8 @@ class _OrderCard extends StatelessWidget {
                 ),
               ),
               IconText(
-                '+${order.coins} $coinToken  +${order.xp} $xpToken',
+                '+${order.coins} $coinToken  +${order.xp} $xpToken'
+                '${order.gems > 0 ? ' +${order.gems} $gemToken' : ''}',
                 style: AppText.style(17, weight: 700),
               ),
             ],

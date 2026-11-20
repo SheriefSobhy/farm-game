@@ -7,8 +7,11 @@ class GameConfig {
   GameConfig._();
 
   // --- Start of a new game ---
-  static const int startingCoins = 100;
+  static const int startingCoins = 150;
   static const int startingPlots = 1;
+
+  /// Buildings a brand-new farm already has.
+  static const List<BuildingKind> startingBuildings = [BuildingKind.oven];
 
   // --- Land ---
   static const int maxPlots = 9;
@@ -20,12 +23,12 @@ class GameConfig {
 
   // --- Old names kept for the first crop and buildings ---
   static const int wheatSeedCost = 5;
-  static const Duration wheatGrowTime = Duration(seconds: 10);
+  static const Duration wheatGrowTime = Duration(seconds: 5);
   static const int wheatPerHarvest = 3;
-  static const int millPrice = 200;
-  static const Duration millTime = Duration(seconds: 5);
-  static const int ovenPrice = 400;
-  static const Duration ovenTime = Duration(seconds: 8);
+  static const int millPrice = 100;
+  static const Duration millTime = Duration(seconds: 3);
+  static const int ovenPrice = 250;
+  static const Duration ovenTime = Duration(seconds: 5);
 
   // --- Crops ---
   static const List<CropDef> crops = [
@@ -40,7 +43,7 @@ class GameConfig {
     CropDef(
       item: Item.corn,
       seedCost: 10,
-      growTime: Duration(seconds: 30),
+      growTime: Duration(seconds: 15),
       harvest: 3,
       xp: 2,
       unlockLevel: 3,
@@ -67,27 +70,31 @@ class GameConfig {
       kind: BuildingKind.popcorn,
       name: 'Popcorn Pot',
       verb: 'Popping',
-      price: 600,
+      price: 450,
       unlockLevel: 3,
     ),
     BuildingDef(
       kind: BuildingKind.feedMill,
       name: 'Feed Mill',
       verb: 'Mixing',
-      price: 500,
+      price: 400,
       unlockLevel: 5,
     ),
     BuildingDef(
       kind: BuildingKind.dairy,
       name: 'Dairy',
       verb: 'Churning',
-      price: 1200,
+      price: 900,
       unlockLevel: 7,
     ),
   ];
 
   /// How many jobs a building can hold at once (working + waiting + done).
-  static const int queueSlots = 1;
+  static const int queueSlots = 3;
+
+  /// Extra queue slots: price in coins of each upgrade (the list length is
+  /// the maximum number of upgrades).
+  static const List<int> queueUpgradePrices = [150, 400, 900];
 
   // --- Recipes ---
   static const List<RecipeDef> recipes = [
@@ -114,7 +121,7 @@ class GameConfig {
       building: BuildingKind.popcorn,
       inputs: {Item.corn: 2},
       output: Item.popcorn,
-      time: Duration(seconds: 20),
+      time: Duration(seconds: 12),
       xp: 5,
       unlockLevel: 3,
     ),
@@ -124,7 +131,7 @@ class GameConfig {
       inputs: {Item.corn: 1},
       output: Item.chickenFeed,
       outputAmount: 3,
-      time: Duration(seconds: 10),
+      time: Duration(seconds: 6),
       xp: 1,
       unlockLevel: 5,
     ),
@@ -133,7 +140,7 @@ class GameConfig {
       building: BuildingKind.oven,
       inputs: {Item.flour: 1, Item.egg: 2},
       output: Item.cake,
-      time: Duration(seconds: 40),
+      time: Duration(seconds: 30),
       xp: 10,
       unlockLevel: 5,
     ),
@@ -143,7 +150,7 @@ class GameConfig {
       inputs: {Item.corn: 1, Item.wheat: 2},
       output: Item.cowFeed,
       outputAmount: 3,
-      time: Duration(seconds: 15),
+      time: Duration(seconds: 10),
       xp: 2,
       unlockLevel: 7,
     ),
@@ -152,7 +159,7 @@ class GameConfig {
       building: BuildingKind.dairy,
       inputs: {Item.milk: 2},
       output: Item.cheese,
-      time: Duration(seconds: 45),
+      time: Duration(seconds: 50),
       xp: 12,
       unlockLevel: 7,
     ),
@@ -166,8 +173,8 @@ class GameConfig {
       penName: 'Chicken Coop',
       feed: Item.chickenFeed,
       product: Item.egg,
-      time: Duration(seconds: 30),
-      price: 80,
+      time: Duration(seconds: 20),
+      price: 60,
       maxCount: 5,
       xp: 2,
       unlockLevel: 5,
@@ -178,8 +185,8 @@ class GameConfig {
       penName: 'Cow Pasture',
       feed: Item.cowFeed,
       product: Item.milk,
-      time: Duration(seconds: 60),
-      price: 200,
+      time: Duration(seconds: 40),
+      price: 150,
       maxCount: 4,
       xp: 4,
       unlockLevel: 7,
@@ -209,12 +216,15 @@ class GameConfig {
   // --- Levels and XP ---
   /// Total XP needed to reach level 2, 3, 4, ... After the list ends each
   /// level needs [xpStepAfterTable] more than the one before.
-  static const List<int> levelXp = [20, 60, 120, 200, 310, 450, 620, 830, 1080, 1380];
-  static const int xpStepAfterTable = 350;
+  static const List<int> levelXp = [40, 300, 720, 1180, 1700, 2350, 3200, 4300, 5600, 7100];
+  static const int xpStepAfterTable = 1800;
 
   /// Coins given on reaching a new level: base + perLevel * level.
   static const int levelUpCoinsBase = 20;
   static const int levelUpCoinsPerLevel = 10;
+
+  /// Gems given on reaching a new level.
+  static const int levelUpGems = 2;
 
   // --- Orders board ---
   static const int orderSlots = 3;
@@ -222,21 +232,12 @@ class GameConfig {
   /// Order rewards are the market value times this, rounded up to 5 coins.
   static const double orderCoinBonus = 1.5;
 
-  /// XP per item in an order, on top of [orderBaseXp].
-  static const Map<Item, int> orderItemXp = {
-    Item.wheat: 1,
-    Item.corn: 2,
-    Item.flour: 2,
-    Item.bread: 4,
-    Item.popcorn: 5,
-    Item.chickenFeed: 1,
-    Item.egg: 3,
-    Item.cake: 10,
-    Item.cowFeed: 2,
-    Item.milk: 5,
-    Item.cheese: 12,
-  };
-  static const int orderBaseXp = 3;
+  /// Order XP = orderBaseXp + market value of the order x orderXpPerCoin.
+  static const int orderBaseXp = 2;
+  static const double orderXpPerCoin = 0.25;
+
+  /// Wait before the next customer comes after an order is delivered.
+  static const Duration orderRefillWait = Duration(seconds: 25);
 
   /// Wait before an empty order slot gets a new order after skipping.
   static const Duration orderSkipWait = Duration(seconds: 20);
@@ -249,6 +250,16 @@ class GameConfig {
 
   // --- Daily reward: coins for streak day 1..7 (day 7 is the big one) ---
   static const List<int> dailyRewardCoins = [30, 40, 50, 60, 80, 100, 250];
+  static const List<int> dailyRewardGems = [0, 0, 1, 0, 0, 1, 5];
+
+  // --- Gems (second currency) ---
+  static const int startingGems = 5;
+
+  /// Speeding up costs 1 gem for every this many seconds left (at least 1).
+  static const int speedUpSecondsPerGem = 20;
+
+  /// Chance that an order also pays a gem.
+  static const double orderGemChance = 0.25;
 
   // --- Daily goals (3 are picked each day from those unlocked) ---
   static const List<GoalDef> goals = [

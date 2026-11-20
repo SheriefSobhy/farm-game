@@ -33,6 +33,7 @@ class TopBar extends StatelessWidget {
               child: LevelBadge(state: state, iconKey: fx.target('xp')),
             ),
             Stat(icon: GameIconType.coin, value: state.coins, iconKey: fx.target('coin'), flex: 4),
+            Stat(icon: GameIconType.gem, value: state.gems, iconKey: fx.target('gem'), flex: 3),
           ],
         ),
       ),

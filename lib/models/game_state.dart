@@ -43,6 +43,7 @@ class GameState extends ChangeNotifier {
   final Random _rnd;
 
   int coins = 0;
+  int gems = 0;
   int xp = 0;
   final Map<Item, int> _items = {};
   final List<Plot> plots = [];
@@ -131,6 +132,7 @@ class GameState extends ChangeNotifier {
     final after = level;
     for (var l = before + 1; l <= after; l++) {
       coins += GameConfig.levelUpCoinsBase + GameConfig.levelUpCoinsPerLevel * l;
+      gems += GameConfig.levelUpGems;
       onLevelUp?.call(l, unlocksAt(l));
     }
     if (after > before) _refillOrders();
@@ -315,6 +317,46 @@ class GameState extends ChangeNotifier {
     return (result: ActionResult.ok(blocked ? '$text  (barn is full!)' : text), items: got);
   }
 
+  /// Gems needed to finish the current job right away.
+  int speedUpCost(ProductionBuilding building) {
+    final j = building.working(nowMs);
+    if (j == null) return 0;
+    final secs = ((j.endMs - nowMs) / 1000).ceil();
+    return max(1, (secs / GameConfig.speedUpSecondsPerGem).ceil());
+  }
+
+  /// Finishes the current job now with gems; the jobs after it move up.
+  ActionResult speedUp(ProductionBuilding building) {
+    final now = nowMs;
+    final j = building.working(now);
+    if (j == null) return const ActionResult.fail('Nothing to speed up.');
+    final cost = speedUpCost(building);
+    if (gems < cost) return ActionResult.fail('Not enough gems! You need $cost $gemToken');
+    gems -= cost;
+    final saved = j.endMs - now;
+    for (final other in building.jobs) {
+      if (other.endMs >= j.endMs) other.endMs -= saved;
+    }
+    _changed();
+    return ActionResult.ok('Done! -$cost $gemToken');
+  }
+
+  /// Price of the next extra queue slot, or null when maxed out.
+  int? queueUpgradePrice(ProductionBuilding building) {
+    final prices = GameConfig.queueUpgradePrices;
+    return building.extraSlots < prices.length ? prices[building.extraSlots] : null;
+  }
+
+  ActionResult upgradeQueue(ProductionBuilding building) {
+    final price = queueUpgradePrice(building);
+    if (price == null) return const ActionResult.fail('This building has the most slots already.');
+    if (coins < price) return ActionResult.fail('Not enough coins! It costs $price $coinToken');
+    coins -= price;
+    building.extraSlots++;
+    _changed();
+    return ActionResult.ok('${building.name} now holds ${building.slots} jobs!');
+  }
+
   // ------------------------------------------------------------- Animals
 
   bool isAnimalUnlocked(AnimalKind kind) => animalDef(kind).unlockLevel <= level;
@@ -419,19 +461,30 @@ class GameState extends ChangeNotifier {
   // -------------------------------------------------------------- Orders
 
   /// Items that orders may ask for: things the player can make right now.
+  /// Only things whose whole chain is possible count (bread needs a mill
+  /// for the flour, eggs need chickens and a feed mill...).
   List<Item> get orderableItems {
-    final list = <Item>[for (final c in unlockedCrops) c.item];
-    for (final b in buildings.values) {
-      if (!b.owned) continue;
-      for (final r in unlockedRecipes(b)) {
-        if (r.output == Item.chickenFeed || r.output == Item.cowFeed) continue;
-        list.add(r.output);
+    final makeable = <Item>{for (final c in unlockedCrops) c.item};
+    var grew = true;
+    while (grew) {
+      grew = false;
+      for (final b in buildings.values) {
+        if (!b.owned) continue;
+        for (final r in unlockedRecipes(b)) {
+          if (!makeable.contains(r.output) && r.inputs.keys.every(makeable.contains)) {
+            makeable.add(r.output);
+            grew = true;
+          }
+        }
+      }
+      for (final p in pens.values) {
+        if (p.animals.isNotEmpty && makeable.contains(p.def.feed) && makeable.add(p.def.product)) {
+          grew = true;
+        }
       }
     }
-    for (final p in pens.values) {
-      if (p.animals.isNotEmpty) list.add(p.def.product);
-    }
-    return list;
+    makeable.removeAll([Item.chickenFeed, Item.cowFeed]);
+    return makeable.toList();
   }
 
   Order _newOrder({int readyAtMs = 0}) {
@@ -444,17 +497,17 @@ class GameState extends ChangeNotifier {
     for (final item in pool.take(lines)) {
       final isCrop = GameConfig.crops.any((c) => c.item == item);
       final maxQty = isCrop ? 3 + lvl : (item.sellPrice < 15 ? 2 + lvl ~/ 2 : 1 + lvl ~/ 3);
-      items[item] = 1 + _rnd.nextInt(max(1, min(maxQty, 8)));
+      final minQty = isCrop ? 3 : 1;
+      items[item] = minQty + _rnd.nextInt(max(1, min(maxQty, 10) - minQty + 1));
     }
     final value = items.entries.fold<int>(0, (a, e) => a + e.key.sellPrice * e.value);
     final coinsReward = ((value * GameConfig.orderCoinBonus) / 5).ceil() * 5;
-    final xpReward =
-        GameConfig.orderBaseXp +
-        items.entries.fold<int>(0, (a, e) => a + (GameConfig.orderItemXp[e.key] ?? 1) * e.value);
+    final xpReward = GameConfig.orderBaseXp + (value * GameConfig.orderXpPerCoin).round();
     return Order(
       items: items,
       coins: coinsReward,
       xp: xpReward,
+      gems: _rnd.nextDouble() < GameConfig.orderGemChance ? 1 : 0,
       customer: _rnd.nextInt(customerNames.length),
       readyAtMs: readyAtMs,
     );
@@ -485,11 +538,15 @@ class GameState extends ChangeNotifier {
       _add(e.key, -e.value);
     }
     coins += o.coins;
-    orders[index] = _newOrder();
+    gems += o.gems;
+    orders[index] = _newOrder(readyAtMs: nowMs + GameConfig.orderRefillWait.inMilliseconds);
     _progressGoals(GoalType.fillOrders, null, 1);
     _addXp(o.xp);
     _changed();
-    return ActionResult.ok('Order done! +${o.coins} $coinToken  +${o.xp} $xpToken');
+    return ActionResult.ok(
+      'Order done! +${o.coins} $coinToken  +${o.xp} $xpToken'
+      '${o.gems > 0 ? '  +${o.gems} $gemToken' : ''}',
+    );
   }
 
   /// Throws an order away; a new customer arrives after a short wait.
@@ -519,6 +576,7 @@ class GameState extends ChangeNotifier {
   }
 
   int dailyCoinsFor(int day) => GameConfig.dailyRewardCoins[(day - 1) % 7];
+  int dailyGemsFor(int day) => GameConfig.dailyRewardGems[(day - 1) % 7];
 
   ActionResult claimDaily() {
     if (!canClaimDaily) return const ActionResult.fail('Come back tomorrow for more!');
@@ -526,9 +584,11 @@ class GameState extends ChangeNotifier {
     streak = lastRewardDay == today - 1 ? streak + 1 : 1;
     lastRewardDay = today;
     final c = dailyCoinsFor(day);
+    final g = dailyGemsFor(day);
     coins += c;
+    gems += g;
     _changed();
-    return ActionResult.ok('Day $day reward: +$c $coinToken');
+    return ActionResult.ok('Day $day reward: +$c $coinToken${g > 0 ? '  +$g $gemToken' : ''}');
   }
 
   /// Makes sure today's goals exist (new goals each day).
@@ -609,6 +669,7 @@ class GameState extends ChangeNotifier {
 
   Map<String, dynamic> toJson() => {
     'version': 2,
+    'gems': gems,
     'coins': coins,
     'xp': xp,
     'items': {for (final i in Item.values) i.name: count(i)},
@@ -632,6 +693,8 @@ class GameState extends ChangeNotifier {
     _resetValues();
     final c = json['coins'];
     if (c is int) coins = c;
+    final gm = json['gems'];
+    if (gm is int && gm >= 0) gems = gm;
     final x = json['xp'];
     if (x is int && x >= 0) xp = x;
 
@@ -723,6 +786,7 @@ class GameState extends ChangeNotifier {
 
   void _resetValues() {
     coins = GameConfig.startingCoins;
+    gems = GameConfig.startingGems;
     xp = 0;
     barnLevel = 0;
     selectedCrop = Item.wheat;
@@ -733,7 +797,7 @@ class GameState extends ChangeNotifier {
       ..clear()
       ..addAll(List.generate(GameConfig.startingPlots, (_) => Plot()));
     for (final b in buildings.values) {
-      b.owned = false;
+      b.owned = GameConfig.startingBuildings.contains(b.kind);
       b.jobs.clear();
       b.extraSlots = 0;
     }

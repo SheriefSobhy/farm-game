@@ -198,9 +198,59 @@ class FarmGame extends FlameGame {
     onOpenSpot(spot);
   }
 
+  // ---------------------------------------------------------------- Field
+
+  /// What the last tap on a plot did, so a drag that starts there keeps
+  /// doing the same thing.
+  ({int index, _PlotAction action})? _lastTap;
+  _PlotAction? _swipeAction;
+  final Set<int> _swiped = {};
+  bool _swipeStopped = false;
+
+  void beginSwipe(int startIndex) {
+    _swiped
+      ..clear()
+      ..add(startIndex);
+    _swipeStopped = false;
+    final last = _lastTap;
+    _swipeAction = last != null && last.index == startIndex ? last.action : null;
+    if (_swipeAction == _PlotAction.none) _swipeAction = null;
+  }
+
+  void swipeAt(Vector2 worldPoint) {
+    if (_swipeStopped) return;
+    for (final plot in world.children.whereType<PlotComponent>()) {
+      final i = plot.index;
+      if (_swiped.contains(i) || i >= state.plots.length) continue;
+      if (!plot.toRect().contains(worldPoint.toOffset())) continue;
+      _swiped.add(i);
+      final p = state.plots[i];
+      final action =
+          _swipeAction ??
+          (p.isEmpty ? _PlotAction.plant : (p.isReady(state.nowMs) ? _PlotAction.harvest : null));
+      if (action == null) return;
+      final wantsEmpty = action == _PlotAction.plant;
+      if (wantsEmpty != p.isEmpty) return; // not the same kind of plot
+      if (action == _PlotAction.harvest && !p.isReady(state.nowMs)) return;
+      _swipeAction = action;
+      plot.press();
+      final done = _actOnPlot(plot, quiet: true);
+      if (done == _PlotAction.none) _swipeStopped = true; // no coins / barn full
+      return;
+    }
+  }
+
+  void endSwipe() => _swipeAction = null;
+
   void handlePlotTap(PlotComponent plot) {
     sound.unlock();
     plot.press();
+    final action = _actOnPlot(plot, quiet: false);
+    _lastTap = (index: plot.index, action: action);
+  }
+
+  /// Plants, harvests or buys [plot]. Returns what happened.
+  _PlotAction _actOnPlot(PlotComponent plot, {required bool quiet}) {
     final index = plot.index;
     final owned = state.plots.length;
     final center = plot.position.clone();
@@ -213,7 +263,7 @@ class FarmGame extends FlameGame {
       if (!result.ok) {
         sound.play(Sfx.error);
         onMessage(result);
-        return;
+        return _PlotAction.none;
       }
       if (wasEmpty) {
         sound.play(Sfx.plant);
@@ -237,8 +287,10 @@ class FarmGame extends FlameGame {
             fontSize: 10,
           ),
         );
-        onFly(worldToWidget(center), itemIcon(crop.item), 'barn', crop.harvest);
+        onFly(worldToWidget(center), itemIcon(crop.item), 'barn', quiet ? 1 : crop.harvest);
+        return _PlotAction.harvest;
       }
+      return _PlotAction.plant;
     } else if (index == owned) {
       final result = state.buyPlot();
       sound.play(result.ok ? Sfx.coin : Sfx.error);
@@ -248,5 +300,8 @@ class FarmGame extends FlameGame {
       sound.play(Sfx.error);
       onMessage(const ActionResult.fail('Buy the plot with the price sign first.'));
     }
+    return _PlotAction.none;
   }
 }
+
+enum _PlotAction { plant, harvest, none }

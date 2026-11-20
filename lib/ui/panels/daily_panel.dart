@@ -43,6 +43,7 @@ class DailyPanel extends StatelessWidget {
                           child: _Day(
                             day: d,
                             coins: state.dailyCoinsFor(d),
+                            gems: state.dailyGemsFor(d),
                             done: d < next || (claimed && d == next),
                             today: d == next,
                           ),
@@ -91,7 +92,15 @@ class DailyPanel extends StatelessWidget {
 }
 
 class _Day extends StatelessWidget {
-  const _Day({required this.day, required this.coins, required this.done, required this.today});
+  const _Day({
+    required this.day,
+    required this.coins,
+    required this.gems,
+    required this.done,
+    required this.today,
+  });
+
+  final int gems;
 
   final int day;
   final int coins;
@@ -113,7 +122,9 @@ class _Day extends StatelessWidget {
         children: [
           Text('Day $day', style: AppText.style(11, weight: 700)),
           GameIcon(
-            done ? GameIconType.check : (big ? GameIconType.gift : GameIconType.coin),
+            done
+                ? GameIconType.check
+                : (big ? GameIconType.gift : (gems > 0 ? GameIconType.gem : GameIconType.coin)),
             size: 24,
           ),
           FittedBox(child: Text('$coins', style: AppText.style(13, weight: 700))),
