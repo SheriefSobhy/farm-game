@@ -4,11 +4,9 @@ import '../game_config.dart';
 enum Item { wheat, flour, bread }
 
 extension ItemInfo on Item {
-  String get emoji => switch (this) {
-        Item.wheat => '🌾',
-        Item.flour => '🥣',
-        Item.bread => '🍞',
-      };
+  /// Placeholder in messages that the UI replaces with this item's icon,
+  /// e.g. "Sold 3 {wheat}".
+  String get token => '{$name}';
 
   String get label => switch (this) {
         Item.wheat => 'Wheat',
@@ -23,5 +21,5 @@ extension ItemInfo on Item {
       };
 }
 
-/// Emoji used for coins everywhere in the game.
-const String coinEmoji = '💰';
+/// Placeholder in messages that the UI replaces with a coin icon.
+const String coinToken = '{coin}';

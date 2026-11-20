@@ -5,8 +5,8 @@ import 'item.dart';
 class Recipe {
   const Recipe({
     required this.buildingName,
-    required this.emoji,
     required this.actionVerb,
+    required this.busyLabel,
     required this.price,
     required this.input,
     required this.inputAmount,
@@ -16,8 +16,8 @@ class Recipe {
   });
 
   final String buildingName;
-  final String emoji;
   final String actionVerb;
+  final String busyLabel;
   final int price;
   final Item input;
   final int inputAmount;
@@ -27,8 +27,8 @@ class Recipe {
 
   static const mill = Recipe(
     buildingName: 'Mill',
-    emoji: '🏭',
     actionVerb: 'Grind',
+    busyLabel: 'Grinding...',
     price: GameConfig.millPrice,
     input: Item.wheat,
     inputAmount: GameConfig.millWheatInput,
@@ -39,8 +39,8 @@ class Recipe {
 
   static const oven = Recipe(
     buildingName: 'Oven',
-    emoji: '🔥',
     actionVerb: 'Bake',
+    busyLabel: 'Baking...',
     price: GameConfig.ovenPrice,
     input: Item.flour,
     inputAmount: GameConfig.ovenFlourInput,

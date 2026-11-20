@@ -26,6 +26,10 @@ class GameState extends ChangeNotifier {
 
   bool _dirty = false;
 
+  /// Optional hook, called when the mill or oven finishes a batch
+  /// (used by the UI for a sound and a message).
+  void Function(ProductionBuilding building)? onProductionDone;
+
   int get nowMs => _clock();
 
   int count(Item item) => _items[item] ?? 0;
@@ -53,23 +57,23 @@ class GameState extends ChangeNotifier {
       const cost = GameConfig.wheatSeedCost;
       if (coins < cost) {
         return const ActionResult.fail(
-            'Not enough coins! Planting costs $cost $coinEmoji');
+            'Not enough coins! Planting costs $cost $coinToken');
       }
       coins -= cost;
       plot.plantedAtMs = now;
       _changed();
-      return const ActionResult.ok('-$cost $coinEmoji');
+      return const ActionResult.ok('-$cost $coinToken');
     }
 
     if (!plot.isReady(now)) {
       final secs = (plot.remainingMs(now) / 1000).ceil();
-      return ActionResult.fail('Still growing… ${secs}s left ⏳');
+      return ActionResult.fail('Still growing... ${secs}s left');
     }
 
     plot.plantedAtMs = null;
     _add(Item.wheat, GameConfig.wheatPerHarvest);
     _changed();
-    return ActionResult.ok('+${GameConfig.wheatPerHarvest} ${Item.wheat.emoji}');
+    return ActionResult.ok('+${GameConfig.wheatPerHarvest} ${Item.wheat.token}');
   }
 
   ActionResult buyPlot() {
@@ -79,7 +83,7 @@ class GameState extends ChangeNotifier {
     final price = nextPlotPrice;
     if (coins < price) {
       return ActionResult.fail(
-          'Not enough coins! A new plot costs $price $coinEmoji');
+          'Not enough coins! A new plot costs $price $coinToken');
     }
     coins -= price;
     plots.add(Plot());
@@ -96,12 +100,12 @@ class GameState extends ChangeNotifier {
     }
     if (coins < recipe.price) {
       return ActionResult.fail(
-          'Not enough coins! The ${recipe.buildingName} costs ${recipe.price} $coinEmoji');
+          'Not enough coins! The ${recipe.buildingName} costs ${recipe.price} $coinToken');
     }
     coins -= recipe.price;
     building.owned = true;
     _changed();
-    return ActionResult.ok('${recipe.buildingName} built! ${recipe.emoji}');
+    return ActionResult.ok('${recipe.buildingName} built!');
   }
 
   ActionResult startProduction(ProductionBuilding building) {
@@ -116,7 +120,7 @@ class GameState extends ChangeNotifier {
     if (count(recipe.input) < recipe.inputAmount) {
       return ActionResult.fail(
           'Not enough ${recipe.input.label.toLowerCase()}! '
-          'You need ${recipe.inputAmount} ${recipe.input.emoji}');
+          'You need ${recipe.inputAmount} ${recipe.input.token}');
     }
     _add(recipe.input, -recipe.inputAmount);
     building.jobStartedAtMs = nowMs;
@@ -129,13 +133,13 @@ class GameState extends ChangeNotifier {
   ActionResult sell(Item item, int amount) {
     if (amount <= 0 || count(item) < amount) {
       return ActionResult.fail(
-          'You have no ${item.label.toLowerCase()} to sell ${item.emoji}');
+          'You have no ${item.label.toLowerCase()} to sell ${item.token}');
     }
     final earned = amount * item.sellPrice;
     _add(item, -amount);
     coins += earned;
     _changed();
-    return ActionResult.ok('Sold $amount ${item.emoji} for $earned $coinEmoji');
+    return ActionResult.ok('Sold $amount ${item.token} for $earned $coinToken');
   }
 
   ActionResult sellAll(Item item) => sell(item, count(item));
@@ -152,6 +156,7 @@ class GameState extends ChangeNotifier {
         b.jobStartedAtMs = null;
         _add(b.recipe.output, b.recipe.outputAmount);
         changed = true;
+        onProductionDone?.call(b);
       }
     }
     if (changed) {

@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 
 import 'models/game_state.dart';
 import 'services/save_service.dart';
+import 'services/sound_service.dart';
 import 'ui/farm_app.dart';
 
 Future<void> main() async {
@@ -15,9 +16,11 @@ Future<void> main() async {
   }
 
   final saveService = SaveService();
+  final sound = SoundService();
   final state = GameState();
   final saved = await saveService.load();
   if (saved != null) state.loadFromJson(saved);
+  await sound.init();
 
-  runApp(FarmApp(state: state, saveService: saveService));
+  runApp(FarmApp(state: state, saveService: saveService, sound: sound));
 }
