@@ -55,6 +55,9 @@ class GameState extends ChangeNotifier {
   int barnLevel = 0;
   Item selectedCrop = Item.wheat;
 
+  /// First-time tutorial step (see [TutorialStep]); [TutorialStep.done] when finished.
+  TutorialStep tutorial = TutorialStep.plant;
+
   // daily reward and goals
   int lastRewardDay = -1;
   int streak = 0;
@@ -541,6 +544,7 @@ class GameState extends ChangeNotifier {
     gems += o.gems;
     orders[index] = _newOrder(readyAtMs: nowMs + GameConfig.orderRefillWait.inMilliseconds);
     _progressGoals(GoalType.fillOrders, null, 1);
+    if (tutorial == TutorialStep.deliver) tutorial = TutorialStep.done;
     _addXp(o.xp);
     _changed();
     return ActionResult.ok(
@@ -678,6 +682,7 @@ class GameState extends ChangeNotifier {
     'pens': {for (final e in pens.entries) e.key.name: e.value.toJson()},
     'orders': [for (final o in orders) o.toJson()],
     'barnLevel': barnLevel,
+    'tutorial': tutorial.name,
     'selectedCrop': selectedCrop.name,
     'daily': {
       'lastReward': lastRewardDay,
@@ -741,6 +746,8 @@ class GameState extends ChangeNotifier {
     }
     _refillOrders();
 
+    // Saves from before the tutorial existed skip it.
+    tutorial = TutorialStep.values.asNameMap()[json['tutorial']] ?? TutorialStep.done;
     final bl = json['barnLevel'];
     if (bl is int && bl >= 0) barnLevel = bl;
     final sc = Item.values.asNameMap()[json['selectedCrop']];
@@ -790,6 +797,7 @@ class GameState extends ChangeNotifier {
     xp = 0;
     barnLevel = 0;
     selectedCrop = Item.wheat;
+    tutorial = TutorialStep.plant;
     _items
       ..clear()
       ..addAll({for (final i in Item.values) i: 0});
@@ -815,8 +823,57 @@ class GameState extends ChangeNotifier {
 
   void _add(Item item, int amount) => _items[item] = count(item) + amount;
 
+  // ------------------------------------------------------------ Tutorial
+
+  /// Moves the tutorial forward when the current step is done.
+  void _advanceTutorial() {
+    var moved = true;
+    while (moved) {
+      moved = false;
+      final next = switch (tutorial) {
+        TutorialStep.plant when plots.any((p) => !p.isEmpty) || count(Item.wheat) > 0 =>
+          TutorialStep.harvest,
+        TutorialStep.harvest when count(Item.wheat) >= tutorialWheatNeeded =>
+          TutorialStep.buildMill,
+        TutorialStep.buildMill when mill.owned => TutorialStep.makeFlour,
+        TutorialStep.makeFlour when count(Item.flour) >= 2 => TutorialStep.bakeBread,
+        TutorialStep.bakeBread when count(Item.bread) >= 1 => TutorialStep.deliver,
+        _ => null,
+      };
+      if (next != null) {
+        tutorial = next;
+        moved = true;
+        if (next == TutorialStep.deliver) _addTutorialOrder();
+      }
+    }
+  }
+
+  /// Wheat needed for two flour (= one bread).
+  static const int tutorialWheatNeeded = 4;
+
+  /// The first customer wants exactly the bread the player just baked.
+  void _addTutorialOrder() {
+    if (orders.any((o) => o.items.length == 1 && o.items[Item.bread] == 1)) return;
+    final order = Order(items: {Item.bread: 1}, coins: 60, xp: 20, gems: 1, customer: 1);
+    if (orders.isEmpty) {
+      orders.add(order);
+    } else {
+      orders[0] = order;
+    }
+  }
+
+  /// Skips the rest of the tutorial.
+  void skipTutorial() {
+    tutorial = TutorialStep.done;
+    _changed();
+  }
+
   void _changed() {
+    _advanceTutorial();
     _dirty = true;
     notifyListeners();
   }
 }
+
+/// The steps of the first-time tutorial, in order.
+enum TutorialStep { plant, harvest, buildMill, makeFlour, bakeBread, deliver, done }

@@ -16,6 +16,7 @@ import '../game_scope.dart';
 import '../widgets/chunky_button.dart';
 import '../widgets/game_message.dart';
 import '../widgets/icon_text.dart';
+import '../widgets/pulse.dart';
 import '../widgets/surfaces.dart';
 
 /// Panel for a production building: the animated building, its job queue
@@ -110,9 +111,12 @@ class _BuildingPanelState extends State<BuildingPanel> with SingleTickerProvider
                     const SizedBox(height: 10),
                     SizedBox(
                       width: double.infinity,
-                      child: ChunkyButton(
-                        label: 'Build for ${b.def.price} $coinToken',
-                        onPressed: () => showGameMessage(context, state.buyBuilding(b)),
+                      child: Pulse(
+                        enabled: state.tutorial == TutorialStep.buildMill,
+                        child: ChunkyButton(
+                          label: 'Build for ${b.def.price} $coinToken',
+                          onPressed: () => showGameMessage(context, state.buyBuilding(b)),
+                        ),
                       ),
                     ),
                   ],
@@ -166,13 +170,16 @@ class _QueueCard extends StatelessWidget {
             children: [
               if (ready > 0)
                 Expanded(
-                  child: ChunkyButton(
-                    label: 'Collect $ready',
-                    height: 44,
-                    fontSize: 18,
-                    color: Palette.gold,
-                    darkColor: Palette.goldDark,
-                    onPressed: onCollect,
+                  child: Pulse(
+                    enabled: state.tutorial != TutorialStep.done,
+                    child: ChunkyButton(
+                      label: 'Collect $ready',
+                      height: 44,
+                      fontSize: 18,
+                      color: Palette.gold,
+                      darkColor: Palette.goldDark,
+                      onPressed: onCollect,
+                    ),
                   ),
                 ),
               if (ready > 0 && working != null) const SizedBox(width: 8),
@@ -315,19 +322,22 @@ class _RecipeCard extends StatelessWidget {
                       ? Center(
                           child: Text('Lv ${r.unlockLevel}', style: AppText.style(17, weight: 700)),
                         )
-                      : ChunkyButton(
-                          label: 'Make',
-                          height: 40,
-                          fontSize: 17,
-                          color: hasAll ? Palette.orange : Palette.disabled,
-                          darkColor: hasAll ? Palette.orangeDark : Palette.disabledDark,
-                          onPressed: canPress
-                              ? () => showGameMessage(
-                                  context,
-                                  state.startProduction(building, r),
-                                  successSound: Sfx.tap,
-                                )
-                              : null,
+                      : Pulse(
+                          enabled: canPress && hasAll && _tutorialWants(state, r),
+                          child: ChunkyButton(
+                            label: 'Make',
+                            height: 40,
+                            fontSize: 17,
+                            color: hasAll ? Palette.orange : Palette.disabled,
+                            darkColor: hasAll ? Palette.orangeDark : Palette.disabledDark,
+                            onPressed: canPress
+                                ? () => showGameMessage(
+                                    context,
+                                    state.startProduction(building, r),
+                                    successSound: Sfx.tap,
+                                  )
+                                : null,
+                          ),
                         ),
                 ),
               ],
@@ -492,3 +502,8 @@ class RecipeChip extends StatelessWidget {
     );
   }
 }
+
+/// True when the tutorial is asking the player to make this recipe.
+bool _tutorialWants(GameState s, RecipeDef r) =>
+    (s.tutorial == TutorialStep.makeFlour && r.id == 'flour') ||
+    (s.tutorial == TutorialStep.bakeBread && r.id == 'bread');

@@ -205,6 +205,7 @@ void main() {
     );
 
     expect(s.level, greaterThanOrEqualTo(5), reason: 'should reach level 5 within an hour');
+    expect(s.tutorial, TutorialStep.done, reason: 'the tutorial steps happen naturally');
     for (var l = 3; l <= 5; l++) {
       final gap = levelAt[l]! - levelAt[l - 1]!;
       expect(gap, inInclusiveRange(1.5, 6.0), reason: 'level $l took $gap minutes');

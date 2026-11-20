@@ -12,6 +12,7 @@ import '../game_scope.dart';
 import '../widgets/chunky_button.dart';
 import '../widgets/game_message.dart';
 import '../widgets/icon_text.dart';
+import '../widgets/pulse.dart';
 import '../widgets/surfaces.dart';
 
 /// The orders board: three customers, each wanting a few things.
@@ -117,11 +118,14 @@ class _OrderCard extends StatelessWidget {
           const SizedBox(height: 8),
           SizedBox(
             width: double.infinity,
-            child: ChunkyButton(
-              label: canFill ? 'Deliver!' : 'Not ready yet',
-              height: 44,
-              fontSize: 19,
-              onPressed: canFill ? () => _fill(context) : null,
+            child: Pulse(
+              enabled: canFill,
+              child: ChunkyButton(
+                label: canFill ? 'Deliver!' : 'Not ready yet',
+                height: 44,
+                fontSize: 19,
+                onPressed: canFill ? () => _fill(context) : null,
+              ),
             ),
           ),
         ],

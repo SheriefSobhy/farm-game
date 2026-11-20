@@ -18,6 +18,8 @@ import '../services/save_service.dart';
 import '../services/sound_service.dart';
 import 'bottom_buttons.dart';
 import 'game_scope.dart';
+import 'hint.dart';
+import 'level_up.dart';
 import 'panels/barn_panel.dart';
 import 'panels/building_panel.dart';
 import 'panels/daily_panel.dart';
@@ -28,6 +30,7 @@ import 'panels/sheet.dart';
 import 'panels/shop_panel.dart';
 import 'top_bar.dart';
 import 'widgets/icon_text.dart';
+import 'widgets/surfaces.dart';
 
 /// The main screen: top bar, the farm, and the bottom buttons.
 /// Tapping a building on the farm slides its panel up from the bottom.
@@ -68,13 +71,33 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
     WidgetsBinding.instance.addObserver(this);
     _s.onProductionDone = _onProductionDone;
     _s.onLevelUp = _onLevelUp;
+    _s.addListener(_watchTutorial);
+    _tutorialSeen = _s.tutorial;
     _tickTimer = Timer.periodic(const Duration(milliseconds: 200), (_) => _s.tick());
     _saveTimer = Timer.periodic(GameConfig.autoSaveInterval, (_) => _save());
+  }
+
+  late TutorialStep _tutorialSeen;
+
+  /// Plays a happy sound on each tutorial step, and gives a tip at the end.
+  void _watchTutorial() {
+    final now = _s.tutorial;
+    if (now == _tutorialSeen) return;
+    _tutorialSeen = now;
+    if (!mounted) return;
+    if (now == TutorialStep.done) {
+      GameScope.of(context).toasts.show(
+        const ActionResult.ok(
+          'Great farming! Tip: drag your finger across the field to plant or harvest many plots at once.',
+        ),
+      );
+    }
   }
 
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    _s.removeListener(_watchTutorial);
     _s.onProductionDone = null;
     _s.onLevelUp = null;
     _tickTimer?.cancel();
@@ -108,15 +131,41 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
     );
   }
 
+  final List<(int, List<Unlock>)> _levelUps = [];
+  bool _showingLevelUp = false;
+
+  /// Level-ups are shown one after another as a full-screen celebration.
   void _onLevelUp(int level, List<Unlock> unlocks) {
-    if (!mounted) return;
-    widget.sound.play(Sfx.done);
-    final names = unlocks.map((u) => u.name).join(', ');
-    GameScope.of(context).toasts.show(
-      ActionResult.ok(
-        'Level $level! +${GameConfig.levelUpGems} {gem}${names.isEmpty ? '' : '  New: $names'}',
-      ),
-    );
+    _levelUps.add((level, unlocks));
+    _showNextLevelUp();
+  }
+
+  Future<void> _showNextLevelUp() async {
+    if (_showingLevelUp || _levelUps.isEmpty || !mounted) return;
+    _showingLevelUp = true;
+    final (level, unlocks) = _levelUps.removeAt(0);
+    // let the current tap's effects play first
+    await Future<void>.delayed(const Duration(milliseconds: 600));
+    if (mounted) await showLevelUp(context, level, unlocks);
+    _showingLevelUp = false;
+    _showNextLevelUp();
+  }
+
+  void _openHint(Hint h) {
+    widget.sound.play(Sfx.tap);
+    final spot = h.spot;
+    if (spot != null) {
+      _openSpot(spot);
+      return;
+    }
+    switch (h.opens) {
+      case 'daily':
+        _openDaily();
+      case 'shop':
+        _openShop();
+      case 'orders':
+        _openOrders();
+    }
   }
 
   /// Flies icons from a spot on the farm to a UI target (barn, coins...).
@@ -221,7 +270,19 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
                       child: GameWidget(game: _game),
                     ),
                   ),
-                  Positioned(right: 8, top: 8, child: SeedPicker(state: _s)),
+                  Positioned(
+                    left: 6,
+                    right: 6,
+                    top: 6,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        HintBanner(state: _s, onTap: _openHint),
+                        const SizedBox(height: 6),
+                        SeedPicker(state: _s),
+                      ],
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -305,6 +366,76 @@ class SeedPicker extends StatelessWidget {
                   ),
                 ),
             ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+/// A small note at the top of the farm saying what to do next.
+/// During the tutorial it shows the tutorial step instead.
+class HintBanner extends StatelessWidget {
+  const HintBanner({super.key, required this.state, required this.onTap});
+
+  final GameState state;
+  final ValueChanged<Hint> onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListenableBuilder(
+      listenable: state,
+      builder: (context, _) {
+        final inTutorial = state.tutorial != TutorialStep.done;
+        final hint = inTutorial ? tutorialHint(state) : nextGoalHint(state);
+        return GestureDetector(
+          onTap: () => onTap(hint),
+          child: AnimatedSwitcher(
+            duration: const Duration(milliseconds: 300),
+            transitionBuilder: (child, anim) => FadeTransition(
+              opacity: anim,
+              child: ScaleTransition(
+                scale: Tween(begin: 0.9, end: 1.0).animate(anim),
+                child: child,
+              ),
+            ),
+            child: Container(
+              key: ValueKey(hint.text),
+              width: double.infinity,
+              padding: const EdgeInsets.fromLTRB(6, 5, 10, 5),
+              decoration: BoxDecoration(
+                color: inTutorial ? Palette.goldLight : Palette.paper,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: Palette.outline, width: 3),
+                boxShadow: hardShadow,
+              ),
+              child: Row(
+                children: [
+                  GameIcon(hint.icon, size: 30),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: IconText(
+                      hint.text,
+                      textAlign: TextAlign.start,
+                      style: AppText.style(inTutorial ? 16 : 15, weight: 650),
+                    ),
+                  ),
+                  if (inTutorial)
+                    GestureDetector(
+                      onTap: state.skipTutorial,
+                      child: Padding(
+                        padding: const EdgeInsets.only(left: 6),
+                        child: Text(
+                          'Skip',
+                          style: AppText.style(13, weight: 600, color: Palette.textSoft),
+                        ),
+                      ),
+                    )
+                  else
+                    const GameIcon(GameIconType.arrow, size: 18),
+                ],
+              ),
+            ),
           ),
         );
       },

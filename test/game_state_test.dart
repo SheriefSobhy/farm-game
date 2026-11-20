@@ -220,4 +220,45 @@ void main() {
     expect(state.level, 1);
     expect(state.orders.length, GameConfig.orderSlots);
   });
+
+  test('the tutorial walks a new player from planting to the first order', () {
+    expect(state.tutorial, TutorialStep.plant);
+    expect(state.oven.owned, isTrue, reason: 'new farms start with an oven');
+    void growAndHarvest() {
+      state.tapPlot(0);
+      now += wheat.growTime.inMilliseconds;
+      expect(state.tapPlot(0).ok, isTrue);
+    }
+
+    state.tapPlot(0);
+    expect(state.tutorial, TutorialStep.harvest);
+    now += wheat.growTime.inMilliseconds;
+    state.tapPlot(0);
+    growAndHarvest();
+    expect(state.tutorial, TutorialStep.buildMill);
+    expect(state.buyBuilding(state.mill).ok, isTrue, reason: 'starting coins buy the mill');
+    expect(state.tutorial, TutorialStep.makeFlour);
+    final flour = recipeById('flour')!;
+    expect(state.startProduction(state.mill, flour).ok, isTrue);
+    expect(state.startProduction(state.mill, flour).ok, isTrue);
+    now += flour.time.inMilliseconds * 2;
+    state.collect(state.mill);
+    expect(state.tutorial, TutorialStep.bakeBread);
+    final bread = recipeById('bread')!;
+    expect(state.startProduction(state.oven, bread).ok, isTrue);
+    now += bread.time.inMilliseconds;
+    state.collect(state.oven);
+    expect(state.tutorial, TutorialStep.deliver);
+    expect(state.orders.first.items, {Item.bread: 1});
+    expect(state.fillOrder(0).ok, isTrue);
+    expect(state.tutorial, TutorialStep.done);
+
+    final again = GameState(clock: () => now)..loadFromJson(state.toJson());
+    expect(again.tutorial, TutorialStep.done);
+  });
+
+  test('old saves skip the tutorial', () {
+    state.loadFromJson({'coins': 10});
+    expect(state.tutorial, TutorialStep.done);
+  });
 }

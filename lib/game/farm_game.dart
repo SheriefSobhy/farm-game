@@ -20,6 +20,7 @@ import 'effects.dart';
 import 'farm_ground.dart';
 import 'farm_layout.dart';
 import 'plot_component.dart';
+import 'tutorial_arrow.dart';
 
 /// The Flame game: one farm scene with the field, buildings and animals.
 class FarmGame extends FlameGame {
@@ -63,6 +64,7 @@ class FarmGame extends FlameGame {
       final animal = spot.animal;
       world.add(animal == null ? BuildingComponent(spot) : PenComponent(animal, spot));
     }
+    world.add(TutorialArrow());
     _fit(size);
   }
 

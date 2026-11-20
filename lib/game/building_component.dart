@@ -14,6 +14,7 @@ import '../models/production_building.dart';
 import '../ui/widgets/icon_text.dart';
 import 'farm_game.dart';
 import 'farm_layout.dart';
+import 'tutorial_arrow.dart';
 
 /// Washed-out colors for buildings the player doesn't own yet.
 final Paint fadedPaint = Paint()
@@ -51,9 +52,7 @@ void drawBubble(Canvas c, Offset bottomCenter, GameIconType icon, double t, {int
   c.drawRect(r, Paint()..color = const Color(0xFFFFFFFF));
   c.drawRect(Rect.fromLTWH(r.center.dx - 1, r.bottom, 3, 2), Paint()..color = Palette.outline);
   paintGameIcon(c, r.deflate(1.5), icon);
-  if (count > 1) {
-    _signText.render(c, '$count', Vector2(r.right + 1, r.top - 1), anchor: Anchor.center);
-  }
+  if (count > 0) drawBadge(c, Offset(r.right + 1, r.top), count);
 }
 
 /// A building placed on the farm. Tapping it opens its panel, or collects
@@ -183,6 +182,10 @@ class BuildingComponent extends PositionComponent with TapCallbacks, HasGameRefe
     }
     canvas.restore();
 
+    if (spot == FarmSpot.orders) {
+      final n = state.fillableOrders;
+      if (n > 0) drawBadge(canvas, Offset(size.x - 3, 4), n);
+    }
     if (b == null) return;
     final signAt = Offset(size.x / 2, size.y - 9);
     if (!unlocked) {
@@ -300,6 +303,10 @@ class PenComponent extends PositionComponent with TapCallbacks, HasGameReference
       drawSign(canvas, signAt, GameIconType.lock, 'Lv ${pen.def.unlockLevel}');
     } else if (empty) {
       drawSign(canvas, signAt, GameIconType.coin, '${pen.def.price}');
+    }
+    final ready = pen.readyCount(s.nowMs);
+    if (ready > 0) {
+      drawBadge(canvas, Offset(size.x - (kind == AnimalKind.chicken ? 8 : 6), 6), ready);
     }
   }
 }
