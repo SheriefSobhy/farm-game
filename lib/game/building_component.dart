@@ -5,6 +5,7 @@ import 'package:flame/events.dart';
 import 'package:flame/particles.dart';
 import 'package:flutter/painting.dart';
 
+import '../art/cartoon.dart';
 import '../art/icons.dart';
 import '../art/palette.dart';
 import '../art/sprites.dart';
@@ -117,10 +118,20 @@ class BuildingComponent extends PositionComponent with TapCallbacks, HasGameRefe
           child: ComputedParticle(
             lifespan: 1.6,
             renderer: (c, p) {
-              final s = 2 + p.progress * 4;
-              c.drawRect(
-                Rect.fromCenter(center: Offset.zero, width: s, height: s),
-                Paint()..color = Palette.smoke.withValues(alpha: 0.85 * (1 - p.progress)),
+              // a soft round puff that grows and fades
+              final r = 1.4 + p.progress * 2.6;
+              final a = 0.85 * (1 - p.progress);
+              c.drawCircle(
+                Offset.zero,
+                r,
+                Paint()
+                  ..color = Palette.smoke.withValues(alpha: a)
+                  ..maskFilter = MaskFilter.blur(BlurStyle.normal, r * 0.25),
+              );
+              c.drawCircle(
+                Offset(-r * 0.3, -r * 0.3),
+                r * 0.4,
+                Paint()..color = const Color(0xFFFFFFFF).withValues(alpha: a * 0.8),
               );
             },
           ),
@@ -151,7 +162,7 @@ class BuildingComponent extends PositionComponent with TapCallbacks, HasGameRefe
 
     switch (spot) {
       case FarmSpot.barn:
-        Art.barn(canvas, 0, 0);
+        Cartoon.barn(canvas);
       case FarmSpot.orders:
         _ordersBoard(canvas);
       case FarmSpot.market:
@@ -160,12 +171,14 @@ class BuildingComponent extends PositionComponent with TapCallbacks, HasGameRefe
         Art.at(canvas, S.sack, 18, 14);
         Art.at(canvas, S.bread, 30, 15);
       case FarmSpot.mill:
-        Art.at(canvas, S.windmillTower, 0, 0, paint: paint);
-        canvas.save();
-        canvas.translate(FarmLayout.millHub.dx, FarmLayout.millHub.dy);
-        canvas.rotate(_angle);
-        Art.at(canvas, S.windmillBlades, -24, -24, paint: paint);
-        canvas.restore();
+        Cartoon.layered(canvas, const Rect.fromLTWH(-24, -24, 80, 80), paint, 1, () {
+          Cartoon.windmillTower(canvas);
+          canvas.save();
+          canvas.translate(FarmLayout.millHub.dx, FarmLayout.millHub.dy);
+          canvas.rotate(_angle);
+          Cartoon.windmillSails(canvas);
+          canvas.restore();
+        });
       case FarmSpot.oven:
         Art.at(canvas, S.oven, 0, 0, paint: paint);
         if (working) _fire(canvas);

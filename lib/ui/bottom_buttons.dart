@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../art/icons.dart';
-import '../art/palette.dart';
 import '../art/text_styles.dart';
 import '../services/sound_service.dart';
 import 'game_scope.dart';
@@ -21,7 +20,7 @@ class BarButton {
   final int badge;
 }
 
-/// Wooden bar with big rounded buttons along the bottom of the screen.
+/// Smooth wooden tray with glossy rounded buttons along the bottom.
 class BottomButtons extends StatelessWidget {
   const BottomButtons({super.key, required this.buttons});
 
@@ -29,13 +28,22 @@ class BottomButtons extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return WoodPanel(
-      planks: 2,
-      border: false,
+    return DecoratedBox(
+      decoration: const BoxDecoration(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [Color(0xFFEDB877), Color(0xFFC98743), Color(0xFFB0702F)],
+          stops: [0, 0.55, 1],
+        ),
+        border: Border(top: BorderSide(color: Color(0xFF8A5424), width: 2)),
+        boxShadow: [BoxShadow(color: Color(0x40000000), blurRadius: 8, offset: Offset(0, -2))],
+      ),
       child: SafeArea(
         top: false,
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(6, 7, 6, 7),
+          padding: const EdgeInsets.fromLTRB(6, 9, 6, 9),
           child: Row(
             children: [for (final b in buttons) Expanded(child: _Button(button: b))],
           ),
@@ -77,26 +85,24 @@ class _ButtonState extends State<_Button> {
         child: Stack(
           clipBehavior: Clip.none,
           children: [
-            Container(
+            GlossyBox(
               height: 66,
+              radius: 18,
               margin: const EdgeInsets.symmetric(horizontal: 3),
-              decoration: BoxDecoration(
-                color: Palette.cream,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Palette.outline, width: 3),
-                boxShadow: hardShadow,
-              ),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   GameIcon(
                     b.icon,
-                    size: 36,
+                    size: 38,
                     key: b.targetName == null ? null : scope.fx.target(b.targetName!),
                   ),
                   FittedBox(
                     fit: BoxFit.scaleDown,
-                    child: Text(b.label, style: AppText.style(14, weight: 700)),
+                    child: Text(
+                      b.label,
+                      style: AppText.style(13.5, weight: 700, color: const Color(0xFF5A3418)),
+                    ),
                   ),
                 ],
               ),
@@ -109,7 +115,7 @@ class _ButtonState extends State<_Button> {
   }
 }
 
-/// A red circle with a white number, for "something is ready".
+/// A glossy red circle with a white number, for "something is ready".
 class RedBadge extends StatelessWidget {
   const RedBadge({super.key, required this.count});
 
@@ -123,9 +129,14 @@ class RedBadge extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 5),
       alignment: Alignment.center,
       decoration: BoxDecoration(
-        color: Palette.red,
+        gradient: const LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [Color(0xFFFF7262), Color(0xFFD8251B)],
+        ),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Palette.outline, width: 2.5),
+        border: Border.all(color: Colors.white, width: 2),
+        boxShadow: softShadow,
       ),
       child: Text(count > 9 ? '9+' : '$count', style: AppText.light(13, weight: 700)),
     );

@@ -1,5 +1,6 @@
 import 'package:flutter/widgets.dart';
 
+import 'cartoon.dart';
 import 'sprites.dart';
 
 /// Every icon used by the UI. All of them are pixel-art sprites.
@@ -90,22 +91,13 @@ Spr? _single(GameIconType t) => switch (t) {
   GameIconType.scroll => S.scroll,
   GameIconType.wheatSeeds => S.wheatSeeds,
   GameIconType.cornSeeds => S.cornSeeds,
-  GameIconType.windmill => null,
+  GameIconType.windmill => S.windmillTower,
 };
 
 /// Paints icon [type] centered inside [rect]. Used by Flutter and Flame.
 void paintGameIcon(Canvas canvas, Rect rect, GameIconType type, {double opacity = 1}) {
-  if (type == GameIconType.windmill) {
-    // tower with its sails, as one picture (48 x 58 units)
-    final k = (rect.width / 48) < (rect.height / 58) ? rect.width / 48 : rect.height / 58;
-    canvas.save();
-    canvas.translate(rect.center.dx - 24 * k, rect.center.dy - 29 * k);
-    canvas.scale(k);
-    Art.at(canvas, S.windmillTower, 8, 12, opacity: opacity);
-    Art.at(canvas, S.windmillBlades, 0, 0, opacity: opacity);
-    canvas.restore();
-    return;
-  }
+  // smooth cartoon icons first; the rest still use the old sprites
+  if (Cartoon.icon(canvas, rect, type.name, opacity: opacity)) return;
   if (type == GameIconType.arrow) {
     // the arrow sprite points down; icons want it pointing right
     canvas.save();

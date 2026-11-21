@@ -4,45 +4,37 @@ import 'dart:ui' as ui;
 import 'package:flame/components.dart';
 import 'package:flutter/painting.dart';
 
+import '../art/cartoon.dart';
 import '../art/sprites.dart';
 import 'farm_layout.dart';
 
 /// Grass, paths, flowers and the tree border around the farm.
 ///
-/// Drawn once into an image at 1 unit = 1 pixel, then scaled up with
-/// nearest-neighbour filtering. That keeps tile edges seamless.
+/// Recorded once as a vector picture and replayed every frame, so the
+/// smooth shapes stay crisp at any zoom.
 class FarmGround extends PositionComponent {
   FarmGround() : super(priority: -100);
 
   static const double _margin = 160;
-  ui.Image? _image;
+  ui.Picture? _picture;
 
   @override
   Future<void> onLoad() async {
-    const w = FarmLayout.worldWidth + _margin * 2;
-    const h = FarmLayout.worldHeight + _margin * 2;
     final rec = ui.PictureRecorder();
-    final c = Canvas(rec);
-    c.translate(_margin, _margin);
-    _paintGround(c);
-    _image = rec.endRecording().toImageSync(w.toInt(), h.toInt());
+    _paintGround(Canvas(rec));
+    _picture = rec.endRecording();
   }
 
   @override
   void onRemove() {
-    _image?.dispose();
+    _picture?.dispose();
     super.onRemove();
   }
 
   @override
   void render(Canvas canvas) {
-    final img = _image;
-    if (img == null) return;
-    canvas.drawImage(
-      img,
-      const Offset(-_margin, -_margin),
-      Paint()..filterQuality = FilterQuality.none,
-    );
+    final pic = _picture;
+    if (pic != null) canvas.drawPicture(pic);
   }
 
   static bool _blocked(Rect r) {
@@ -58,24 +50,46 @@ class FarmGround extends PositionComponent {
   void _paintGround(Canvas c) {
     final rnd = Random(42);
     const m = _margin;
-    // grass everywhere, with tufts and a few flowers sprinkled around
-    for (var y = -m; y < FarmLayout.worldHeight + m; y += 16) {
-      for (var x = -m; x < FarmLayout.worldWidth + m; x += 16) {
-        final roll = rnd.nextDouble();
-        final tile = roll < 0.18 ? S.grassTufts : (roll < 0.24 ? S.grassFlowers : S.grass);
-        final r = Rect.fromLTWH(x, y, 16, 16);
-        Art.draw(c, _blocked(r) && tile == S.grassFlowers ? S.grass : tile, r);
+    // a smooth lawn with grass tufts and a few flowers sprinkled around
+    const area = Rect.fromLTWH(
+      -m,
+      -m,
+      FarmLayout.worldWidth + m * 2,
+      FarmLayout.worldHeight + m * 2,
+    );
+    Cartoon.lawn(c, area, rnd);
+    const petals = [Color(0xFFFFFFFF), Color(0xFFFF8FB1), Color(0xFFFFE15A), Color(0xFFB9A2FF)];
+    for (var i = 0; i < 1400; i++) {
+      final o = Offset(
+        area.left + rnd.nextDouble() * area.width,
+        area.top + rnd.nextDouble() * area.height,
+      );
+      if (_blocked(Rect.fromCenter(center: o, width: 6, height: 6))) continue;
+      if (rnd.nextDouble() < 0.1) {
+        Cartoon.flower(c, o, petals[rnd.nextInt(petals.length)], s: 0.9 + rnd.nextDouble() * 0.3);
+      } else {
+        Cartoon.tuft(
+          c,
+          o,
+          0.7 + rnd.nextDouble() * 0.5,
+          color: rnd.nextBool() ? Cartoon.grassDark : const Color(0xFF66B23E),
+        );
       }
     }
 
     // a dirt path from the barn door down between the field and buildings
-    for (var y = 112.0; y < 284; y += 16) {
-      Art.at(c, S.path, 118, y);
-    }
-    for (var x = 22.0; x < 118; x += 16) {
-      Art.at(c, S.path, x, 102);
-    }
-    Art.at(c, S.path, 118, 102);
+    final path = Path.combine(
+      PathOperation.union,
+      Path()
+        ..addRRect(
+          RRect.fromRectAndRadius(const Rect.fromLTWH(119, 101, 15, 186), const Radius.circular(7.5)),
+        ),
+      Path()
+        ..addRRect(
+          RRect.fromRectAndRadius(const Rect.fromLTWH(20, 101, 114, 15), const Radius.circular(7.5)),
+        ),
+    );
+    Cartoon.dirtPath(c, path, const Rect.fromLTWH(20, 101, 114, 186), rnd);
 
     // tree border outside the farm, drawn back to front
     final border = <(Spr, double, double)>[];

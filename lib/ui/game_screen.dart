@@ -251,14 +251,17 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
       backgroundColor: Palette.grass,
       body: Column(
         children: [
-          ColoredBox(
-            color: Palette.wood,
+          DecoratedBox(
+            // a bright sky strip above the farm
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+                colors: [Color(0xFF5DB8F2), Color(0xFFA6DDF8)],
+              ),
+              border: Border(bottom: BorderSide(color: Color(0xFF4E9A3A), width: 2)),
+            ),
             child: SafeArea(bottom: false, child: TopBar(state: _s)),
-          ),
-          const SizedBox(
-            height: 3,
-            width: double.infinity,
-            child: ColoredBox(color: Palette.outline),
           ),
           Expanded(
             child: ClipRect(
@@ -286,11 +289,6 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
                 ],
               ),
             ),
-          ),
-          const SizedBox(
-            height: 3,
-            width: double.infinity,
-            child: ColoredBox(color: Palette.outline),
           ),
         ],
       ),

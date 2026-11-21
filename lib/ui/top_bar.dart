@@ -3,15 +3,16 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 
 import '../art/icons.dart';
-import '../art/palette.dart';
 import '../art/text_styles.dart';
 import '../models/game_state.dart';
 import 'game_scope.dart';
 import 'widgets/animated_count.dart';
 import 'widgets/surfaces.dart';
 
-/// Wooden bar with the level (and XP bar) and coins.
-/// Icons are targets for flying icons ("xp", "coin").
+const Color _barText = Color(0xFF5A3418);
+
+/// Glossy pills with the level (and XP bar), coins and gems.
+/// Icons are targets for flying icons ("xp", "coin", "gem").
 class TopBar extends StatelessWidget {
   const TopBar({super.key, required this.state});
 
@@ -20,9 +21,7 @@ class TopBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final fx = GameScope.of(context).fx;
-    return WoodPanel(
-      planks: 2,
-      border: false,
+    return Padding(
       padding: const EdgeInsets.fromLTRB(6, 8, 6, 9),
       child: ListenableBuilder(
         listenable: state,
@@ -86,24 +85,23 @@ class _StatState extends State<Stat> with SingleTickerProviderStateMixin {
         animation: _bump,
         builder: (context, child) =>
             Transform.scale(scale: 1 + 0.14 * sin(_bump.value * pi), child: child),
-        child: Container(
+        child: GlossyBox(
           height: 38,
-          margin: const EdgeInsets.symmetric(horizontal: 2),
-          padding: const EdgeInsets.only(left: 2, right: 7),
-          decoration: BoxDecoration(
-            color: Palette.woodDeep,
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: Palette.outline, width: 3),
-          ),
+          radius: 19,
+          margin: const EdgeInsets.symmetric(horizontal: 3),
+          padding: const EdgeInsets.only(left: 1, right: 10),
           child: Row(
             children: [
-              GameIcon(widget.icon, key: widget.iconKey, size: 28),
+              GameIcon(widget.icon, key: widget.iconKey, size: 32),
               const SizedBox(width: 2),
               Expanded(
                 child: FittedBox(
                   fit: BoxFit.scaleDown,
                   alignment: Alignment.centerRight,
-                  child: AnimatedCount(value: widget.value, style: AppText.light(18, weight: 650)),
+                  child: AnimatedCount(
+                    value: widget.value,
+                    style: AppText.style(19, weight: 700, color: _barText),
+                  ),
                 ),
               ),
             ],
@@ -124,46 +122,70 @@ class LevelBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return GlossyBox(
       height: 38,
-      margin: const EdgeInsets.symmetric(horizontal: 2),
-      padding: const EdgeInsets.only(right: 8),
-      decoration: BoxDecoration(
-        color: Palette.woodDeep,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Palette.outline, width: 3),
-      ),
+      radius: 19,
+      margin: const EdgeInsets.symmetric(horizontal: 3),
+      padding: const EdgeInsets.only(right: 10),
       child: Row(
         children: [
           SizedBox(
-            width: 38,
-            child: Center(child: GameIcon(GameIconType.star, key: iconKey, size: 32)),
+            width: 40,
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                GameIcon(GameIconType.star, key: iconKey, size: 36),
+                Padding(
+                  padding: const EdgeInsets.only(top: 3),
+                  child: Text(
+                    '${state.level}',
+                    style: AppText.light(state.level > 9 ? 11 : 13, weight: 700),
+                  ),
+                ),
+              ],
+            ),
           ),
           Expanded(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Level ${state.level}', style: AppText.light(13, weight: 650)),
+                Text('Level ${state.level}', style: AppText.style(13, weight: 700, color: _barText)),
                 const SizedBox(height: 2),
                 TweenAnimationBuilder<double>(
                   tween: Tween(end: state.levelProgress),
                   duration: const Duration(milliseconds: 500),
                   curve: Curves.easeOutCubic,
                   builder: (context, v, _) => Container(
-                    height: 9,
+                    height: 10,
                     decoration: BoxDecoration(
-                      color: Palette.outline,
-                      borderRadius: BorderRadius.circular(3),
+                      color: const Color(0xFF7A4D24),
+                      borderRadius: BorderRadius.circular(5),
+                      boxShadow: const [
+                        BoxShadow(color: Color(0x66FFFFFF), offset: Offset(0, 1)),
+                      ],
                     ),
                     padding: const EdgeInsets.all(1.5),
                     alignment: Alignment.centerLeft,
                     child: FractionallySizedBox(
-                      widthFactor: v.clamp(0.0, 1.0),
+                      widthFactor: v.clamp(0.06, 1.0),
                       child: Container(
                         decoration: BoxDecoration(
-                          color: Palette.gold,
-                          borderRadius: BorderRadius.circular(2),
+                          borderRadius: BorderRadius.circular(4),
+                          gradient: const LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [Color(0xFFC8F56E), Color(0xFF4DB52A)],
+                          ),
+                        ),
+                        alignment: Alignment.topCenter,
+                        padding: const EdgeInsets.fromLTRB(3, 1, 3, 0),
+                        child: Container(
+                          height: 2,
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.55),
+                            borderRadius: BorderRadius.circular(1),
+                          ),
                         ),
                       ),
                     ),

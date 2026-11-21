@@ -5,6 +5,92 @@ import '../../art/palette.dart';
 /// Hard pixel-style drop shadow used by cards and panels.
 const List<BoxShadow> hardShadow = [BoxShadow(color: Color(0x553F2631), offset: Offset(0, 4))];
 
+/// Soft, blurred drop shadow for glossy cartoon UI.
+const List<BoxShadow> softShadow = [
+  BoxShadow(color: Color(0x47000000), blurRadius: 6, offset: Offset(0, 3)),
+];
+
+/// A glossy rounded box: vertical gradient, thin darker outline, a light
+/// highlight across the top half and a soft shadow (cartoon game style).
+class GlossyBox extends StatelessWidget {
+  const GlossyBox({
+    super.key,
+    required this.child,
+    this.colors = const [Color(0xFFFFFDF4), Color(0xFFF6DA9C)],
+    this.borderColor = const Color(0xFFAD7236),
+    this.radius = 16,
+    this.height,
+    this.width,
+    this.padding = EdgeInsets.zero,
+    this.margin = EdgeInsets.zero,
+    this.shadows = softShadow,
+    this.glossAlpha = 0.75,
+  });
+
+  final Widget child;
+  final List<Color> colors;
+  final Color borderColor;
+  final double radius;
+  final double? height;
+  final double? width;
+  final EdgeInsetsGeometry padding;
+  final EdgeInsetsGeometry margin;
+  final List<BoxShadow> shadows;
+  final double glossAlpha;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: height,
+      width: width,
+      margin: margin,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: colors,
+        ),
+        borderRadius: BorderRadius.circular(radius),
+        border: Border.all(color: borderColor, width: 2),
+        boxShadow: shadows,
+      ),
+      child: Stack(
+        children: [
+          Positioned.fill(
+            child: Align(
+              alignment: Alignment.topCenter,
+              child: FractionallySizedBox(
+                heightFactor: 0.46,
+                widthFactor: 1,
+                child: Padding(
+                  padding: EdgeInsets.fromLTRB(radius * 0.35, 2, radius * 0.35, 0),
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.vertical(
+                        top: Radius.circular(radius),
+                        bottom: Radius.circular(radius * 0.6),
+                      ),
+                      gradient: LinearGradient(
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                        colors: [
+                          Colors.white.withValues(alpha: glossAlpha),
+                          Colors.white.withValues(alpha: 0.05),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+          Padding(padding: padding, child: child),
+        ],
+      ),
+    );
+  }
+}
+
 /// Cream "paper" card with a dark outline, matching the pixel art.
 class PaperCard extends StatelessWidget {
   const PaperCard({

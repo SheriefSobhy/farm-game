@@ -5,6 +5,7 @@ import 'package:flame/events.dart';
 import 'package:flutter/animation.dart';
 import 'package:flutter/painting.dart';
 
+import '../art/cartoon.dart';
 import '../art/palette.dart';
 import '../art/sprites.dart';
 import '../art/text_styles.dart';
@@ -98,11 +99,10 @@ class PlotComponent extends PositionComponent
     }
   }
 
+  static const Rect _soilRect = Rect.fromLTWH(0.5, 0.5, 31, 31);
+
   void _beds(Canvas c, {required bool wet, double opacity = 1}) {
-    for (final y in [0.0, 16.0]) {
-      Art.at(c, wet ? S.bedLeftWet : S.bedLeftDry, 0, y, opacity: opacity);
-      Art.at(c, wet ? S.bedRightWet : S.bedRightDry, 16, y, opacity: opacity);
-    }
+    Cartoon.layered(c, _soilRect, null, opacity, () => Cartoon.soil(c, _soilRect, wet: wet));
   }
 
   void _renderOwned(Canvas c) {
@@ -114,19 +114,22 @@ class PlotComponent extends PositionComponent
 
     final p = plot.progress(now);
     final stage = plot.isReady(now) ? 2 : (p < 0.5 ? 0 : 1);
-    final sprite = (plot.crop == Item.corn ? S.cornStages : S.wheatStages)[stage];
+    final isCorn = plot.crop == Item.corn;
     final grow = Curves.easeOutBack.transform(_plantPop);
     for (var k = 0; k < 4; k++) {
       final cx = (k % 2) * 16.0 + 8;
       final base = (k ~/ 2) * 16.0 + 13;
       c.save();
       c.translate(cx, base);
-      if (stage == 2) {
-        // ripe wheat sways in the breeze
-        c.skew(sin(_t * 2.4 + index * 0.9 + k * 0.7) * 0.12, 0);
-      }
+      // every crop sways gently in the breeze; ripe ones a bit more
+      final sway = stage == 2 ? 0.12 : 0.05;
+      c.skew(sin(_t * 2.4 + index * 0.9 + k * 0.7) * sway, 0);
       c.scale(grow, grow);
-      Art.at(c, sprite, -8, -13);
+      if (isCorn) {
+        Art.at(c, S.cornStages[stage], -8, -13);
+      } else {
+        Cartoon.wheat(c, stage);
+      }
       c.restore();
     }
 
@@ -137,18 +140,11 @@ class PlotComponent extends PositionComponent
         final a = sin(tw / 0.5 * pi);
         final sx = 6 + ((index * 7 + (_t * 1.6).floor() * 11) % 20).toDouble();
         final sy = 2 + ((index * 5 + (_t * 1.6).floor() * 7) % 20).toDouble();
-        final paint = Paint()..color = const Color(0xFFFFFFFF).withValues(alpha: a);
-        c.drawRect(Rect.fromLTWH(sx, sy - 1, 1, 3), paint);
-        c.drawRect(Rect.fromLTWH(sx - 1, sy, 3, 1), paint);
+        Cartoon.sparkle(c, Offset(sx, sy), 2.2 * a, a);
       }
     } else {
       // growth bar along the bottom edge
-      const bar = Rect.fromLTWH(4, 28, 24, 4);
-      c.drawRect(bar, Paint()..color = Palette.outline);
-      c.drawRect(
-        Rect.fromLTWH(bar.left + 1, bar.top + 1, (bar.width - 2) * p, bar.height - 2),
-        Paint()..color = Palette.gold,
-      );
+      Cartoon.progressBar(c, const Rect.fromLTWH(5, 27.5, 22, 4), p);
     }
   }
 
@@ -166,15 +162,14 @@ class PlotComponent extends PositionComponent
       Paint()..color = Palette.paperDark,
     );
     c.drawRect(const Rect.fromLTWH(15, 22, 2, 8), Paint()..color = Palette.outline);
-    Art.draw(c, S.coin, const Rect.fromLTWH(4, 11, 9, 9));
+    Cartoon.icon(c, const Rect.fromLTWH(4, 11, 9, 9), 'coin');
     _priceText.render(c, '$price', Vector2(21, 15.5), anchor: Anchor.center);
     Art.draw(c, S.plus, const Rect.fromLTWH(20, 0, 12, 12));
     c.restore();
   }
 
   void _renderLocked(Canvas c) {
-    Art.at(c, S.grassTufts, 0, 0, opacity: 0.8);
-    Art.at(c, S.grassTufts, 16, 16, opacity: 0.8);
+    _beds(c, wet: false, opacity: 0.22);
     Art.draw(c, S.lock, const Rect.fromLTWH(9, 9, 14, 14), opacity: 0.75);
   }
 }
